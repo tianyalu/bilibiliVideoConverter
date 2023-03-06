@@ -9,6 +9,7 @@ import json
 myDir = 'F:/bilibiliVideoDLSmall/test'  # 存放从手机复制而来的文件夹的地方
 finalDir = 'F:/bilibiliVideoDLOutput'  # 存放最终MP4文件的地方
 REMOVEOri = False  # 如果需要将源文件删除，将其更改为True
+CUSTOM_DIR = True  # 是否自定义输入文件处理目录
 
 errMsg = ['合并成功', '合并错误', '未读取到文件']
 
@@ -16,6 +17,7 @@ errMsg = ['合并成功', '合并错误', '未读取到文件']
 def print_hi(name):
     # Use a breakpoint in the code line below to debug your script.
     print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+    print(len([1, 2, 3, 4]))
 
 
 def convert_video():
@@ -27,7 +29,10 @@ def convert_video():
     # filter() 函数用于过滤序列，过滤掉不符合条件的元素，返回由符合条件元素组成的新列表。参数一：判断函数；参数二：需要处理的序列
     # list() 用于将元组转换为列表
     # 最外层的目录
-    for videoNameDir in list(filter(os.path.isdir, os.listdir())):
+    file_list = list(filter(os.path.isdir, os.listdir()))
+    succeed_count = 0
+    total_count = len(file_list)
+    for videoNameDir in file_list:
         # F:\bilibiliVideoDLSmall\test\389864960
         video_main_dir = os.path.join(directory, videoNameDir)  # 把目录和文件名合成一个路径
         print('video_main_dir -> ', video_main_dir)
@@ -47,6 +52,7 @@ def convert_video():
             print(json_data)
             new_file_name = json_data['title']
             print('new_file_name -> ', new_file_name)
+            file.close()  # 关闭文件
             os.chdir(each_part_path)  # reach 此视频主文件夹中的一个分p
 
             # 视频一般放在分p文件夹中的数字文件夹中，一般数字文件夹仅一个
@@ -59,18 +65,28 @@ def convert_video():
 
                 # 在此路径下调用cmd: ffmpeg -i video.m4s -i audio.m4s -codec copy output.mp4
                 # subprocess 模块允许我们启动一个新进程，并连接到它们的输入/输出/错误管道，从而获取返回值：0代表正确执行，1和2都是错误执行，2通常是没有读取到文件
-                # ret = subprocess.call('ffmpeg -i video.m4s -i audio.m4s -codec copy output.mp4', shell=True)
-                # print('execute cmd result -> ', errMsg[ret])
+                ret = subprocess.call('ffmpeg -i video.m4s -i audio.m4s -codec copy output.mp4', shell=True)
+                print('execute cmd result -> ', errMsg[ret])
 
                 # output.mp4的绝对路径
                 file_path_out_put_old_name = os.path.join(directory, videoNameDir, cDir, digitFolder, 'output.mp4')
                 print('file_path_out_put_old_name -> ', file_path_out_put_old_name)
                 new_name = new_file_name + '.mp4'
                 print('new_name -> ', new_name)
+                if not os.path.exists(finalDir):  # 不存在则创建文件目录
+                    os.makedirs(finalDir)
                 file_path_out_put_new_name_with_new_path = os.path.join(finalDir, new_name)
                 print('file_path_out_put_new_name_with_new_path -> ', file_path_out_put_new_name_with_new_path)
+
+                if os.path.exists(file_path_out_put_new_name_with_new_path):
+                    os.remove(file_path_out_put_new_name_with_new_path)  # 存在则删除文件
+                    print('删除文件成功：', file_path_out_put_new_name_with_new_path)
                 # 重命名文件或目录
-                # os.rename(file_path_out_put_old_name, file_path_out_put_new_name_with_new_path)
+                os.rename(file_path_out_put_old_name, file_path_out_put_new_name_with_new_path)
+                succeed_count += 1
+
+    print(f'文件批量合成完毕：{succeed_count}/{total_count}')
+    # print('文件批量合成完毕：%d/%d' % (succeed_count, total_count))
 
     if REMOVEOri:
         # remove 源文件夹
@@ -85,6 +101,11 @@ def convert_video():
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     print_hi('PyCharm')
+    if CUSTOM_DIR:
+        myDir = input('请输入源文件目录：')
+        print(f'源文件目录为：{myDir}')
+        finalDir = input('请输入目标文件目录：')
+        print(f'目标文件目录为：{finalDir}')
     convert_video()
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
