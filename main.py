@@ -16,6 +16,7 @@ CUSTOM_DIR = False  # 是否自定义输入文件处理目录
 
 errMsg = ['合并成功', '合并错误', '未读取到文件']
 
+
 # 测试函数
 def print_hi(name):
     # Use a breakpoint in the code line below to debug your script.
@@ -77,7 +78,7 @@ def convert_video():
 
                 new_name = new_file_name + '.mp4'
                 print('new_name -> ', new_name)
-                filtered_name = file_name_filter(new_name)
+                filtered_name = file_name_filter(new_name)  # 过滤Windows文件名中的非法字符
                 print('filtered_name -> ', filtered_name)
 
                 # 在此路径下调用cmd: ffmpeg -i video.m4s -i audio.m4s -codec copy output.mp4
