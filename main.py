@@ -5,21 +5,33 @@ import os
 import subprocess
 import shutil
 import json
+import re
 
-myDir = 'F:/bilibiliVideoDLSmall/test'  # 存放从手机复制而来的文件夹的地方
-finalDir = 'F:/bilibiliVideoDLOutput'  # 存放最终MP4文件的地方
+# myDir = 'F:/bilibiliVideoDLSmall/test'  # 存放从手机复制而来的文件夹的地方
+myDir = 'F:/Video/down/AfunDownload/Nox_share/ImageShare/BibiliDownload/test'  # 存放从手机复制而来的文件夹的地方
+# finalDir = 'F:/bilibiliVideoDLOutput'  # 存放最终MP4文件的地方
+finalDir = 'F:/Video/down/BilibiliDownload2/di7'  # 存放最终MP4文件的地方
 REMOVEOri = False  # 如果需要将源文件删除，将其更改为True
-CUSTOM_DIR = True  # 是否自定义输入文件处理目录
+CUSTOM_DIR = False  # 是否自定义输入文件处理目录
 
 errMsg = ['合并成功', '合并错误', '未读取到文件']
 
-
+# 测试函数
 def print_hi(name):
     # Use a breakpoint in the code line below to debug your script.
     print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
     print(len([1, 2, 3, 4]))
 
 
+# 过滤Windows文件名中的非法字符
+def file_name_filter(file_name):
+    invalid_chars = '[\\\/:*?？"<>|]'
+    replace_char = ''
+    filename = re.sub(invalid_chars, replace_char, file_name)
+    return filename
+
+
+# video.m4s和audio.m4s合并转换为MP4的核心代码
 def convert_video():
     os.chdir(myDir)  # 改变当前的工作目录到指定的路径
     directory = os.getcwd()  # 返回当前工作目录
@@ -63,6 +75,11 @@ def convert_video():
                 print('sep_path -> ', sep_path)
                 os.chdir(sep_path)  # reach 此视频主文件夹中的一个分p的数字文件夹
 
+                new_name = new_file_name + '.mp4'
+                print('new_name -> ', new_name)
+                filtered_name = file_name_filter(new_name)
+                print('filtered_name -> ', filtered_name)
+
                 # 在此路径下调用cmd: ffmpeg -i video.m4s -i audio.m4s -codec copy output.mp4
                 # subprocess 模块允许我们启动一个新进程，并连接到它们的输入/输出/错误管道，从而获取返回值：0代表正确执行，1和2都是错误执行，2通常是没有读取到文件
                 ret = subprocess.call('ffmpeg -i video.m4s -i audio.m4s -codec copy output.mp4', shell=True)
@@ -71,11 +88,9 @@ def convert_video():
                 # output.mp4的绝对路径
                 file_path_out_put_old_name = os.path.join(directory, videoNameDir, cDir, digitFolder, 'output.mp4')
                 print('file_path_out_put_old_name -> ', file_path_out_put_old_name)
-                new_name = new_file_name + '.mp4'
-                print('new_name -> ', new_name)
                 if not os.path.exists(finalDir):  # 不存在则创建文件目录
                     os.makedirs(finalDir)
-                file_path_out_put_new_name_with_new_path = os.path.join(finalDir, new_name)
+                file_path_out_put_new_name_with_new_path = os.path.join(finalDir, filtered_name)
                 print('file_path_out_put_new_name_with_new_path -> ', file_path_out_put_new_name_with_new_path)
 
                 if os.path.exists(file_path_out_put_new_name_with_new_path):
