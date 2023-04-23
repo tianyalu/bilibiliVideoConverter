@@ -7,10 +7,10 @@ import shutil
 import json
 import re
 
-# myDir = 'F:/bilibiliVideoDLSmall/test'  # 存放从手机复制而来的文件夹的地方
-myDir = 'F:/Video/down/AfunDownload/Nox_share/ImageShare/BibiliDownload/test'  # 存放从手机复制而来的文件夹的地方
-# finalDir = 'F:/bilibiliVideoDLOutput'  # 存放最终MP4文件的地方
-finalDir = 'F:/Video/down/BilibiliDownload2/di7'  # 存放最终MP4文件的地方
+myDir = 'F:/bilibiliVideoDLSmall/test'  # 存放从手机复制而来的文件夹的地方
+# myDir = 'F:/Video/down/AfunDownload/Nox_share/ImageShare/BibiliDownload/test'  # 存放从手机复制而来的文件夹的地方
+finalDir = 'F:/bilibiliVideoDLOutput'  # 存放最终MP4文件的地方
+# finalDir = 'F:/Video/down/BilibiliDownload2/di7'  # 存放最终MP4文件的地方
 REMOVEOri = False  # 如果需要将源文件删除，将其更改为True
 CUSTOM_DIR = False  # 是否自定义输入文件处理目录
 
