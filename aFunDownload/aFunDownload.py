@@ -30,7 +30,6 @@ URL = "https://www.acfun.cn/v/ac43577708"
 # 视频前缀     https://ali-safety-video.acfun.cn/mediacloud/acfun/acfun_video
 PREFIX_URL = "https://ali-safety-video.acfun.cn/mediacloud/acfun/acfun_video/"
 
-
 # 请求头，模拟浏览器访问
 headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 "
@@ -44,31 +43,35 @@ def get_video_info_and_title(url):
     response = requests.get(url=url, headers=headers)
     response.encoding = "utf-8"
     html = response.text
-    # print(html)
+    # pprint.pprint(f'html: {html}')
     # 3.解析数据，先找标题
     # 使用lxml和正则表达式解析HTML
     etree_html = etree.HTML(html)
+    # pprint.pprint(f'etree_html: {etree_html}')
     title = etree_html.xpath('//div[@class="video-description clearfix"]/h1/span/text()')  # 只有一个标题 使用xpath来取
     title = title[0] if (len(title) > 0) else '未定义的title'
+    # print(f'title-->{title}')
     # 去除标题中的特殊字符
     title = re.sub(r"[\/\\\:\*\?\"\<\>\|]", "", title)  # 清理标题中的特殊字符
     # 再找视频的URL地址
     # re.S：标志参数，表示在匹配时考虑换行符。因为正则表达式中的 . 默认不匹配换行符
-    videoInfo = re.findall(r"window.pageInfo= window.videoInfo = (.*?);", html, re.S)
+    videoInfo = re.findall(r"window.pageInfo = window.videoInfo = (.*?);", html, re.S)
     videoInfo = videoInfo[0] if (len(videoInfo) > 0) else '未定义的videoInfo'
+    # print(videoInfo)
     return videoInfo, title
 
 
 # 第二步：解析视频数据
 def parse_data(videoInfo):
-    pprint(videoInfo)
     # 解析JSON数据
-    ksPlayJson = json.loads(videoInfo)['currentVideo']['ksPlayJson']
+    ksPlayJson = json.loads(videoInfo)['currentVideoInfo']['ksPlayJson']
+    # print(ksPlayJson)
     representation = json.loads(ksPlayJson)['adaptationSet'][0]['representation']
     backupUrl = representation[0]['backupUrl'][0]  # 视频的URL地址
     # 请求视频数据
     m3u8_data = requests.get(url=backupUrl, headers=headers)
     m3u8_data.encoding = 'utf-8'
+    print(m3u8_data.text)
     # 使用正则表达式找到所有的视频片段URL
     segments = re.findall(r",\n(.*?)\n#E", m3u8_data.text, re.S)
     return segments
@@ -86,8 +89,11 @@ def download_video(segments, title, name):
             pprint.pprint(f"{title}.mp4下载失败，丢失片段{m3u8_download_url}，状态码：{video_get.status_code}")
             continue
         else:
+            video_dir = f"file/video/{name}"
+            if not os.path.exists(video_dir):
+                os.makedirs(video_dir)
             video = video_get.content
-            with open(f"file/video/{name}/{title}.mp4", 'ab') as f:
+            with open(f"{video_dir}/{title}.mp4", 'ab') as f:
                 f.write(video)
                 print(f"下载完成 {title}.mp4")
                 f.close()
@@ -128,7 +134,8 @@ def download_video_concurrently(segments, title, name):
     final_path = f"{video_dir}/{title}.mp4"
     segment_urls = [segment_url for segment_url in segments]
     # 准备下载任务
-    tasks = [(index, segment_url, video_dir, title) for index, segment_url in enumerate(segment_urls)]  # enumerate() 函数用于将一个可遍历的数据对象（如列表、元组或字符串）组合为一个索引序列，同时列出数据和数据下标
+    tasks = [(index, segment_url, video_dir, title) for index, segment_url in
+             enumerate(segment_urls)]  # enumerate() 函数用于将一个可遍历的数据对象（如列表、元组或字符串）组合为一个索引序列，同时列出数据和数据下标
     # 存储临时文件名
     segment_files = [None] * len(segments)  # [None] * len(segments) 使用乘法操作符创建了一个包含 None 元素的列表，其长度等于 segments 列表的长度
     with ThreadPoolExecutor(max_workers=10) as executor:
@@ -155,8 +162,20 @@ def main(url, name):
     download_video_concurrently(findall, title, name)
 
 
+def test():
+    html = "<div class='video-description clearfix'><h1 " \
+           'class="title"><span>【温】全皮肤盛宴_(:з」∠)_你喜欢的我都有！</span></h1><div> '
+    etree_html = etree.HTML(html)
+    # pprint.pprint(f'etree_html --> {etree_html}')
+    # nodes_with_class = etree_html.xpath("//div[@class='video-description clearfix']")
+    title = etree_html.xpath('//div[@class="video-description clearfix"]/h1/span/text()')
+    # pprint.pprint(f'title --> {title}')
+    title = title[0] if (len(title) > 0) else '未定义的title'
+    print(f'title --> {title}')
+
 if __name__ == '__main__':
     # print('PyCharm hhah哈哈哈 ')
     # (videoInfo, title) = get_video_info_and_title(URL)
     # print(f'videoInfo: {videoInfo}\n title: {title}')
     main(URL, '测试')
+    # test()
