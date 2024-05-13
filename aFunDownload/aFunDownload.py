@@ -23,12 +23,20 @@ from tqdm import tqdm  # 在控制台显示进度条
 from concurrent.futures import ThreadPoolExecutor, as_completed  # 提供异步执行的能力
 import os
 import pprint
+import time
+import logging
 
 # 1.确定url地址
-URL = "https://www.acfun.cn/v/ac43577708"
+# URL = "https://www.acfun.cn/v/ac43577708"
+# URL = "https://m.acfun.cn/v/?ac=44523314&sid=d75e7106fb456c95"
+# URL = "https://m.acfun.cn/v/?ac=44523314"
+URL = "https://www.acfun.cn/v/ac44523314"
 # URL = 'https://www.acfun.cn/u/56776847?quickViewId=ac-space-video-list&reqID=2&ajaxpipe=1&type=video&order=newest&page=1&pageSize=20&t=1705985425289'
-# 视频前缀     https://ali-safety-video.acfun.cn/mediacloud/acfun/acfun_video
-PREFIX_URL = "https://ali-safety-video.acfun.cn/mediacloud/acfun/acfun_video/"
+# 视频前缀
+PREFIX_URL = "https://ali-safety-video.acfun.cn/mediacloud/acfun/acfun_video"
+VIDEO_DIR = 'file/video'
+
+logging.basicConfig(filename='error_log.txt', level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # 请求头，模拟浏览器访问
 headers = {
@@ -44,21 +52,39 @@ def get_video_info_and_title(url):
     response.encoding = "utf-8"
     html = response.text
     # pprint.pprint(f'html: {html}')
+    logging.error(html)
     # 3.解析数据，先找标题
     # 使用lxml和正则表达式解析HTML
     etree_html = etree.HTML(html)
     # pprint.pprint(f'etree_html: {etree_html}')
+    # //div 会选择所有 <div> 元素，而 div 只会选择当前上下文节点的直接子级中的 <div> 元素
     title = etree_html.xpath('//div[@class="video-description clearfix"]/h1/span/text()')  # 只有一个标题 使用xpath来取
     title = title[0] if (len(title) > 0) else '未定义的title'
-    # print(f'title-->{title}')
+    print(f'title-->{title}')
     # 去除标题中的特殊字符
     title = re.sub(r"[\/\\\:\*\?\"\<\>\|]", "", title)  # 清理标题中的特殊字符
     # 再找视频的URL地址
     # re.S：标志参数，表示在匹配时考虑换行符。因为正则表达式中的 . 默认不匹配换行符
     videoInfo = re.findall(r"window.pageInfo = window.videoInfo = (.*?);", html, re.S)
     videoInfo = videoInfo[0] if (len(videoInfo) > 0) else '未定义的videoInfo'
-    # print(videoInfo)
+    if not is_valid_json(videoInfo):
+        print('JSON 非法')
+        videoInfo = get_video_info_again(html)
+    print(videoInfo)
+
+    # logging.error('alkfdjadsl')
+    logging.error(videoInfo)
     return videoInfo, title
+
+
+def get_video_info_again(text):
+    # 定义正则表达式模式
+    pattern = r'window\.pageInfo\s*=\s*window\.videoInfo\s*=\s*({.*?})'
+    # 使用 re.findall() 提取匹配的内容
+    matches = re.findall(pattern, text)
+    # print(matches)
+    matches = matches[0] if (len(matches) > 0) else '未定义的videoInfo'
+    return matches
 
 
 # 第二步：解析视频数据
@@ -79,9 +105,11 @@ def parse_data(videoInfo):
 
 # 下载视频
 def download_video(segments, title, name):
+    start_time = time.time()
+    total_segment = 0
     for item in tqdm(segments):
         # 拼接视频的URL地址
-        m3u8_download_url = PREFIX_URL + item
+        m3u8_download_url = f'{PREFIX_URL}/{item}'
         print(m3u8_download_url)
         # 下载视频数据
         video_get = requests.get(url=m3u8_download_url, headers=headers)
@@ -89,22 +117,27 @@ def download_video(segments, title, name):
             pprint.pprint(f"{title}.mp4下载失败，丢失片段{m3u8_download_url}，状态码：{video_get.status_code}")
             continue
         else:
-            video_dir = f"file/video/{name}"
+            total_segment += 1
+            video_dir = f"{VIDEO_DIR}/{name}"
             if not os.path.exists(video_dir):
                 os.makedirs(video_dir)
             video = video_get.content
-            with open(f"{video_dir}/{title}.mp4", 'ab') as f:
+            with open(f"{video_dir}/{title}.mp4", 'ab') as f:  # append binary
                 f.write(video)
-                print(f"下载完成 {title}.mp4")
                 f.close()
+    end_time = time.time()
+    print(f"下载完成 {title}.mp4 \n完成率：{total_segment}/{len(segments)}")
+    print(f'用时：{end_time - start_time} S')
 
 
 # 第三步：下载视频片段
 def download_segment(args):
     # 下载单个视频片段
     index, segment_url, video_dir, title = args
+    segment_url = segment_url if (segment_url.startswith('http')) else f'{PREFIX_URL}/{segment_url}'
     temp_filename = f"{video_dir}/temp_{index:05d}.ts"
     try:
+        print(f'\nsegment url --> {segment_url}')
         response = requests.get(url=segment_url, headers=headers)
         if response.status_code == 200:
             with open(temp_filename, "wb") as f:
@@ -128,7 +161,8 @@ def merge_video_segments(segment_files, final_path):
 
 # 第四步：并发下载和合并视频
 def download_video_concurrently(segments, title, name):
-    video_dir = f"file/video/{name}"
+    start_time = time.time()
+    video_dir = f"{VIDEO_DIR}/{name}"
     if not os.path.exists(video_dir):
         os.makedirs(video_dir)
     final_path = f"{video_dir}/{title}.mp4"
@@ -147,19 +181,20 @@ def download_video_concurrently(segments, title, name):
     # 合并视频片段
     if all(segment_files):
         merge_video_segments(segment_files, final_path)
-        print(f"视频合并完成：{final_path}")
+        end_time = time.time()
+        print(f"视频合并完成({len(segment_files)}/{len(segments)})：{final_path}")
+        print(f"用时：{end_time - start_time} S")
     else:
         print("某些片段下载失败，视频可能不完整")
 
 
-def main(url, name):
-    # name为空的就传时间
-    if name == '':
-        name = "A站"
+def download(url, name='A站', isConcurrently=True):
     videoInfo, title = get_video_info_and_title(url)
     findall = parse_data(videoInfo)
-    download_video(findall, title, name)
-    download_video_concurrently(findall, title, name)
+    if isConcurrently:
+        download_video_concurrently(findall, title, name)
+    else:
+        download_video(findall, title, name)
 
 
 def test():
@@ -173,9 +208,19 @@ def test():
     title = title[0] if (len(title) > 0) else '未定义的title'
     print(f'title --> {title}')
 
+
+# 判断JSON是否合法
+def is_valid_json(json_str):
+    try:
+        json.loads(json_str)
+        return True
+    except json.JSONDecodeError:
+        return False
+
+
 if __name__ == '__main__':
-    # print('PyCharm hhah哈哈哈 ')
-    # (videoInfo, title) = get_video_info_and_title(URL)
-    # print(f'videoInfo: {videoInfo}\n title: {title}')
-    main(URL, '测试')
     # test()
+    # print(r'window\.pageInfo\s*=\s*window\.videoInfo\s*=\s*({.*?})')
+    # download(URL, '测试', False)  # 12.328634262084961 S
+    download(URL, '测试2', True)  # 8.814500570297241 S
+
