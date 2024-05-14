@@ -27,6 +27,8 @@ import time
 import logging
 
 # 1.确定url地址
+
+# 单视频下载
 # URL = "https://www.acfun.cn/v/ac43577708"
 # URL = "https://m.acfun.cn/v/?ac=44523314&sid=d75e7106fb456c95"
 # URL = "https://m.acfun.cn/v/?ac=44523314"
@@ -34,6 +36,13 @@ URL = "https://www.acfun.cn/v/ac44523314"
 # URL = 'https://www.acfun.cn/u/56776847?quickViewId=ac-space-video-list&reqID=2&ajaxpipe=1&type=video&order=newest&page=1&pageSize=20&t=1705985425289'
 # 视频前缀
 PREFIX_URL = "https://ali-safety-video.acfun.cn/mediacloud/acfun/acfun_video"
+
+# 批量下载（下载一个up主的所有视频）
+# 批量下载的URL
+BATCH_URL = "https://www.acfun.cn/u/56776847"
+# 视频前缀
+PREFIX_BATCH_URL = "https://www.acfun.cn"
+
 VIDEO_DIR = 'file/video'
 
 logging.basicConfig(filename='error_log.txt', level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -188,7 +197,7 @@ def download_video_concurrently(segments, title, name):
         print("某些片段下载失败，视频可能不完整")
 
 
-def download(url, name='A站', isConcurrently=True):
+def single_download_video(url, name='A站', isConcurrently=True):
     videoInfo, title = get_video_info_and_title(url)
     findall = parse_data(videoInfo)
     if isConcurrently:
@@ -218,9 +227,75 @@ def is_valid_json(json_str):
         return False
 
 
+# 目录不存在时创建目录
+def create_directory(directory_path):
+    try:
+        if not os.path.exists(directory_path):
+            os.makedirs(directory_path)
+            print(f"目录'{directory_path}'已创建")
+        else:
+            print(f"目录'{directory_path}'已存在")
+    except Exception as e:
+        print(f"创建目录时发生错误：{e}")
+
+
+def batch_download_video(batch_url):
+    # 把所有的视频URL放到一个列表中
+    all_video_url = []
+    # 发请求获取页面数据
+    requests_get = requests.get(url=batch_url, headers=headers)
+    requests_get.encoding = "utf-8"
+    html = requests_get.text
+    print(html)
+    # 解析数据
+    # 先找up主的名字和视频数量以及视频的URL地址
+    etree_html = etree.HTML(html)
+    # 视频总数量
+    num = etree_html.xpath("//li[@class='active']/span/text()")
+    num = num[0] if (len(num) > 0) else 0
+    # up主的名字
+    name = etree_html.xpath("//span[@class='text-overflow name']/text()")
+    name = name[0] if (len(name) > 0) else '未定义的up主名称'
+    print(f"up主的名字：{name}，视频总数量：{num}")
+
+    # 找到视频的URL地址
+    hrefs = etree_html.xpath("//div[@id='ac-space-video-list']/a/@href")
+    # 先装第一页的视频URL地址
+    all_video_url = [PREFIX_BATCH_URL + href for href in hrefs]
+    # 找到下一页的url地址，根据num判断页数 一页20个视频
+    # 页数
+    page = int(num) // 20 + 1
+    # 下一页的URL地址
+    for i in range(2, page + 1):  # 从第二页开始，因为第一页已经装了
+        # 获取当前时间戳
+        current_timestamp = time.time()
+        next_url = batch_url + f"?quickViewId=ac-space-video-list&reqID={i}&ajaxpipe=1&type=video&order=newest&page={i}&pageSize=20&t={current_timestamp}"
+        print(next_url)
+        # 发请求获取页面数据
+        requests_get = requests.get(url=next_url, headers=headers)
+        requests_get.encoding = 'utf-8'
+        html = requests_get.text
+        # 解析数据 使用正则
+        hrefs = re.findall(r'href=\\"(.*?)"', html, re.S)
+        for href in hrefs:
+            # href /v/ac42368063\\ 去 \\
+            href = href.replace('\\', '')
+            all_video_url.append(PREFIX_BATCH_URL + href)
+    all_video_url = list(set(all_video_url))  # 去重
+
+    # 测试
+    all_video_url = all_video_url[:5]
+
+    # 创建目录
+    create_directory(f"{VIDEO_DIR}/{name}")
+
+    # 下载
+    for item in all_video_url:
+        single_download_video(item, name, True)
+
+
 if __name__ == '__main__':
     # test()
-    # print(r'window\.pageInfo\s*=\s*window\.videoInfo\s*=\s*({.*?})')
-    # download(URL, '测试', False)  # 12.328634262084961 S
-    download(URL, '测试2', True)  # 8.814500570297241 S
-
+    # single_download_video(URL, '测试', False)  # 12.328634262084961 S
+    # single_download_video(URL, '测试2', True)  # 8.814500570297241 S
+    batch_download_video(BATCH_URL)
