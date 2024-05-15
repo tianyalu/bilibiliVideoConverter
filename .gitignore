@@ -2,3 +2,5 @@
 .idea
 /aFunDownload/file
 /aFunDownload/error_log.txt
+/bilibiliDownload/*.mp3
+/bilibiliDownload/*.mp4
