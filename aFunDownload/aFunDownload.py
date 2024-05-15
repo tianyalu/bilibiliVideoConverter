@@ -63,7 +63,8 @@ def get_video_info_and_title(url):
     response.encoding = "utf-8"
     html = response.text
     # pprint.pprint(f'html: {html}')
-    logging.error(html)
+    # logging.error(html)
+
     # 3.解析数据，先找标题
     # 使用lxml和正则表达式解析HTML
     etree_html = etree.HTML(html)
