@@ -32,7 +32,8 @@ import logging
 # URL = "https://www.acfun.cn/v/ac43577708"
 # URL = "https://m.acfun.cn/v/?ac=44523314&sid=d75e7106fb456c95"
 # URL = "https://m.acfun.cn/v/?ac=44523314"
-URL = "https://www.acfun.cn/v/ac35582241"
+# URL = "https://www.acfun.cn/v/ac35582241"
+URL = "https://www.acfun.cn/v/ac35437039"
 # URL = 'https://www.acfun.cn/u/56776847?quickViewId=ac-space-video-list&reqID=2&ajaxpipe=1&type=video&order=newest&page=1&pageSize=20&t=1705985425289'
 # 视频前缀
 PREFIX_URL = "https://ali-safety-video.acfun.cn/mediacloud/acfun/acfun_video"
@@ -49,10 +50,12 @@ VIDEO_DIR = 'E:/Video/Afun/j_2024年5月15日005857'
 
 logging.basicConfig(filename='error_log.txt', level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
+cookie = '_did=web_1919071475B7ED70; _did=web_1919071475B7ED70; lsv_js_player_v2_main=e4d400; acPasstoken=ChVpbmZyYS5hY2Z1bi5wYXNzdG9rZW4ScF2AZBASWJBFsWB0xB39NEqKKelTamMDfm8scx1mth7iVfK8w74NlNLBA1QLQYQENIbtkrsTPGmyPWZkOneQKIOCePekEYm_3adZb5xTPiLgoXNKuVUxpYhgwiazGRXudj8VWgPlZY--4kEL1wsxV9waEpeyvoxdTP1KmaSqp4F28QDqNSIgbVND-loy2pzkwFGTBTFU_jYdl6IB5psALRWxpIi2M7EoBTAB; auth_key=19410036; ac_username=%E5%A4%A9%E6%B6%AF%E8%B7%AF2; acPostHint=5b56db99e87800bdb756f41e3b687e1123e6; ac_userimg=https%3A%2F%2Fimgs.aixifan.com%2Fstyle%2Fimage%2F201908%2FGEf9kCBCmahRBHsZJc5clycPZnjUSMRe.jpg; csrfToken=hHS89B7bZVBMB-JW1inwluSF; cur_req_id=681665908DF22CE2_self_2d45c537a4f93b4689463857c3114dd1; cur_group_id=681665908DF22CE2_self_2d45c537a4f93b4689463857c3114dd1_0; webp_supported=%7B%22lossy%22%3Atrue%2C%22lossless%22%3Atrue%2C%22alpha%22%3Atrue%2C%22animation%22%3Atrue%7D; Hm_lvt_2af69bc2b378fb58ae04ed2a04257ed1=1715273236,1715445319,1715704642,1715791911; safety_id=AAI3eYMjDISBr2-FAIkGDXAu; Hm_lpvt_2af69bc2b378fb58ae04ed2a04257ed1=1715794631'
 # 请求头，模拟浏览器访问
 headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 "
-                  "Safari/537.36 "
+                  "Safari/537.36 ",
+    "Cookie": cookie
 }
 
 
@@ -63,7 +66,7 @@ def get_video_info_and_title(url):
     response.encoding = "utf-8"
     html = response.text
     # pprint.pprint(f'html: {html}')
-    # logging.error(html)
+    logging.error(html)
 
     # 3.解析数据，先找标题
     # 使用lxml和正则表达式解析HTML
@@ -91,11 +94,13 @@ def get_video_info_and_title(url):
 
 def get_video_info_again(text):
     # 定义正则表达式模式
-    pattern = r'window\.pageInfo\s*=\s*window\.videoInfo\s*=\s*({.*?})'
+    pattern = r'window\.pageInfo\s*=\s*window\.videoInfo\s*=\s*({.*?};)'
     # 使用 re.findall() 提取匹配的内容
     matches = re.findall(pattern, text)
     # print(matches)
     matches = matches[0] if (len(matches) > 0) else '未定义的videoInfo'
+    if matches.endswith(';'):
+        matches = matches[:-1]
     return matches
 
 
@@ -122,7 +127,7 @@ def download_video(segments, title, name):
     for item in tqdm(segments):
         # 拼接视频的URL地址
         m3u8_download_url = f'{PREFIX_URL}/{item}'
-        print(m3u8_download_url)
+        # print(m3u8_download_url)
         # 下载视频数据
         video_get = requests.get(url=m3u8_download_url, headers=headers)
         if video_get.status_code != 200:
@@ -149,7 +154,7 @@ def download_segment(args):
     segment_url = segment_url if (segment_url.startswith('http')) else f'{PREFIX_URL}/{segment_url}'
     temp_filename = f"{video_dir}/temp_{index:05d}.ts"
     try:
-        print(f'\nsegment url --> {segment_url}')
+        # print(f'\nsegment url --> {segment_url}')
         response = requests.get(url=segment_url, headers=headers)
         if response.status_code == 200:
             with open(temp_filename, "wb") as f:
@@ -363,6 +368,6 @@ def batch_download_fav_video(batch_url, slice_count=0):
 if __name__ == '__main__':
     # test()
     # single_download_video(URL, '测试', False)  # 12.328634262084961 S
-    # single_download_video(URL, '', True)  # 8.814500570297241 S
+    single_download_video(URL, '', True)  # 8.814500570297241 S
     # batch_download_upper_video(BATCH_URL, 3)
-    batch_download_fav_video(BATCH_FAV_URL, 4)
+    # batch_download_fav_video(BATCH_FAV_URL, 4)
