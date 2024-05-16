@@ -46,7 +46,9 @@ BATCH_FAV_URL = "https://www.acfun.cn/member/favourite/folder/74420975"
 PREFIX_BATCH_URL = "https://www.acfun.cn"
 
 # VIDEO_DIR = 'file/video'
-VIDEO_DIR = 'E:/Video/Afun/j_2024年5月15日005857'
+VIDEO_DIR = 'E:/Video/Afun/jj_2024年5月15日005857'
+PAGE_SIZE_UPPER = 20
+PAGE_SIZE_FAV = 30
 
 logging.basicConfig(filename='error_log.txt', level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -279,7 +281,7 @@ def batch_download_upper_video(batch_url, slice_count=0):
     else:
         # 找到下一页的url地址，根据num判断页数 一页20个视频
         # 页数
-        page = int(num) // 20 + 1
+        page = int(num) // PAGE_SIZE_UPPER + 1
         # 下一页的URL地址
         for i in range(2, page + 1):  # 从第二页开始，因为第一页已经装了
             # 获取当前时间戳
@@ -329,45 +331,46 @@ def batch_download_fav_video(batch_url, slice_count=0):
     # print(hrefs)
     # 先装第一页的视频URL地址
     all_video_url = [PREFIX_BATCH_URL + href for href in hrefs]
-    all_video_url = list(set(all_video_url))  # 去重
+    # all_video_url = list(set(all_video_url))  # 去重
     print(f'all_video_url[{len(all_video_url)}]--> {all_video_url}')
-    return
+
     # 截取前slice_count个视频下载
-    if slice_count > 0:
+    if slice_count > 0 and len(all_video_url) <= PAGE_SIZE_FAV:
         all_video_url = all_video_url[:slice_count]
     else:
-        # 找到下一页的url地址，根据num判断页数 一页20个视频
+        print('else branch todo')
+        # 找到下一页的url地址，根据num判断页数 一页30个视频
         # 页数
-        page = int(num) // 20 + 1
-        # 下一页的URL地址
-        for i in range(2, page + 1):  # 从第二页开始，因为第一页已经装了
-            # 获取当前时间戳
-            current_timestamp = time.time()
-            next_url = batch_url + f"?quickViewId=ac-space-video-list&reqID={i}&ajaxpipe=1&type=video&order=newest&page={i}&pageSize=20&t={current_timestamp}"
-            print(next_url)
-            # 发请求获取页面数据
-            requests_get = requests.get(url=next_url, headers=headers)
-            requests_get.encoding = 'utf-8'
-            html = requests_get.text
-            # 解析数据 使用正则
-            hrefs = re.findall(r'href=\\"(.*?)"', html, re.S)
-            for href in hrefs:
-                # href /v/ac42368063\\ 去 \\
-                href = href.replace('\\', '')
-                all_video_url.append(PREFIX_BATCH_URL + href)
-        all_video_url = list(set(all_video_url))  # 去重
+        # page = int(num) // PAGE_SIZE_FAV + 1
+        # # 下一页的URL地址
+        # for i in range(2, page + 1):  # 从第二页开始，因为第一页已经装了
+        #     # 获取当前时间戳
+        #     current_timestamp = time.time()
+        #     next_url = batch_url + f"?quickViewId=ac-space-video-list&reqID={i}&ajaxpipe=1&type=video&order=newest&page={i}&pageSize=20&t={current_timestamp}"
+        #     print(next_url)
+        #     # 发请求获取页面数据
+        #     requests_get = requests.get(url=next_url, headers=headers)
+        #     requests_get.encoding = 'utf-8'
+        #     html = requests_get.text
+        #     # 解析数据 使用正则
+        #     hrefs = re.findall(r'href=\\"(.*?)"', html, re.S)
+        #     for href in hrefs:
+        #         # href /v/ac42368063\\ 去 \\
+        #         href = href.replace('\\', '')
+        #         all_video_url.append(PREFIX_BATCH_URL + href)
+        # all_video_url = list(set(all_video_url))  # 去重
 
     # 创建目录
     create_directory(VIDEO_DIR)
 
     # 下载
     for item in all_video_url:
-        single_download_video(item, name, True)
+        single_download_video(item, '', True)
 
 
 if __name__ == '__main__':
     # test()
     # single_download_video(URL, '测试', False)  # 12.328634262084961 S
-    # single_download_video(URL, '', True)  # 8.814500570297241 S
+    single_download_video(URL, '', True)  # 8.814500570297241 S
     # batch_download_upper_video(BATCH_URL, 3)
-    batch_download_fav_video(BATCH_FAV_URL, 4)
+    # batch_download_fav_video(BATCH_FAV_URL, 2)
