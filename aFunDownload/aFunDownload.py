@@ -314,24 +314,24 @@ def batch_download_fav_video(batch_url, slice_count=0):
     requests_get = requests.get(url=batch_url, headers=headers)
     requests_get.encoding = "utf-8"
     html = requests_get.text
-    print(html)
+    # print(html)
+    logging.error(html)
     # 解析数据
     # 先找up主的名字和视频数量以及视频的URL地址
     etree_html = etree.HTML(html)
     # 视频总数量
-    num = etree_html.xpath("//li[@class='active']/span/text()")
-    num = num[0] if (len(num) > 0) else 0
-    # up主的名字
-    name = etree_html.xpath("//span[@class='text-overflow name']/text()")
-    name = name[0] if (len(name) > 0) else '未定义的up主名称'
-    print(f"up主的名字：{name}，视频总数量：{num}")
+    # num = etree_html.xpath("//li[@class='active']/span/text()")
+    # num = num[0] if (len(num) > 0) else 0
+    # print(f"视频总数量：{num}")
 
     # 找到视频的URL地址
-    hrefs = etree_html.xpath("//div[@id='ac-space-video-list']/a/@href")
+    hrefs = etree_html.xpath("//div[@class='ac-member-favourite-douga-item-cover ']/a/@href")
+    # print(hrefs)
     # 先装第一页的视频URL地址
     all_video_url = [PREFIX_BATCH_URL + href for href in hrefs]
     all_video_url = list(set(all_video_url))  # 去重
-
+    print(f'all_video_url[{len(all_video_url)}]--> {all_video_url}')
+    return
     # 截取前slice_count个视频下载
     if slice_count > 0:
         all_video_url = all_video_url[:slice_count]
@@ -368,6 +368,6 @@ def batch_download_fav_video(batch_url, slice_count=0):
 if __name__ == '__main__':
     # test()
     # single_download_video(URL, '测试', False)  # 12.328634262084961 S
-    single_download_video(URL, '', True)  # 8.814500570297241 S
+    # single_download_video(URL, '', True)  # 8.814500570297241 S
     # batch_download_upper_video(BATCH_URL, 3)
-    # batch_download_fav_video(BATCH_FAV_URL, 4)
+    batch_download_fav_video(BATCH_FAV_URL, 4)
