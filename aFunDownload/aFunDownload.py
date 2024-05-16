@@ -8,6 +8,7 @@
 2. 通过requests模块发送请求，获取响应数据
 
 3. 保存视频数据
+4. 给视频加封面：ffmpeg -i output.mp4 -i cover.jpeg -map 0 -map 1 -c copy -c:v:1 png -disposition:v:1 attached_pic output_with_cover.mp4
 
 进阶 ：获取一个up主的所有视频
     https://www.acfun.cn/u/56776847?quickViewId=ac-space-video-list&reqID=2&ajaxpipe=1&type=video&order=newest&page=1&pageSize=20&t=1705985425289
@@ -33,7 +34,8 @@ import logging
 # URL = "https://m.acfun.cn/v/?ac=44523314&sid=d75e7106fb456c95"
 # URL = "https://m.acfun.cn/v/?ac=44523314"
 # URL = "https://www.acfun.cn/v/ac35582241"
-URL = "https://www.acfun.cn/v/ac35437039"
+# URL = "https://www.acfun.cn/v/ac35437039"
+URL = "https://www.acfun.cn/v/ac44546118"
 # URL = 'https://www.acfun.cn/u/56776847?quickViewId=ac-space-video-list&reqID=2&ajaxpipe=1&type=video&order=newest&page=1&pageSize=20&t=1705985425289'
 # 视频前缀
 PREFIX_URL = "https://ali-safety-video.acfun.cn/mediacloud/acfun/acfun_video"
@@ -46,7 +48,7 @@ BATCH_FAV_URL = "https://www.acfun.cn/member/favourite/folder/74420975"
 PREFIX_BATCH_URL = "https://www.acfun.cn"
 
 # VIDEO_DIR = 'file/video'
-VIDEO_DIR = 'E:/Video/Afun/jj_2024年5月15日005857'
+VIDEO_DIR = 'E:/Video/Afun/j_2024年5月15日005857'
 PAGE_SIZE_UPPER = 20
 PAGE_SIZE_FAV = 30
 
@@ -209,6 +211,7 @@ def download_video_concurrently(segments, title, name):
 
 def single_download_video(url, name='', isConcurrently=True):
     videoInfo, title = get_video_info_and_title(url)
+    return
     findall = parse_data(videoInfo)
     if isConcurrently:
         download_video_concurrently(findall, title, name)
