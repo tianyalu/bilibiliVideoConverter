@@ -245,16 +245,16 @@ def single_download_video(url, isConcurrently=True):
     findall, cover_image_url = parse_data(videoInfo)
     final_name = get_file_name(title)
     print(f'final_name --> {final_name}')
-    # return
+    # 下载视频
     if isConcurrently:
         download_video_concurrently(findall, final_name)
     else:
         download_video(findall, final_name)
-
+    # 添加视频封面
     merge_video_cover_img(final_name, cover_image_url)
 
 
-# 批量下载up主的视频，如果第二个参数>0, 则只截取第一页的前slice_count个视频下载
+# 批量下载up主的视频，如果第二个参数>0, 则只截取前slice_count个视频下载
 def batch_download_upper_video(batch_url, slice_count=0):
     # 把所有的视频URL放到一个列表中
     all_video_url = []
@@ -281,7 +281,7 @@ def batch_download_upper_video(batch_url, slice_count=0):
     all_video_url = list(set(all_video_url))  # 去重
 
     # 截取前slice_count个视频下载
-    if slice_count > 0:
+    if slice_count > 0 and len(all_video_url) <= PAGE_SIZE_UPPER:
         all_video_url = all_video_url[:slice_count]
     else:
         # 找到下一页的url地址，根据num判断页数 一页20个视频
@@ -303,17 +303,16 @@ def batch_download_upper_video(batch_url, slice_count=0):
                 # href /v/ac42368063\\ 去 \\
                 href = href.replace('\\', '')
                 all_video_url.append(PREFIX_BATCH_URL + href)
-        all_video_url = list(set(all_video_url))  # 去重
-
-    # 创建目录
-    fileutil.create_directory(f"{VIDEO_DIR}/{name}")
+        if slice_count > 0:
+            all_video_url = all_video_url[:slice_count]
+        # all_video_url = list(set(all_video_url))  # 去重
 
     # 下载
     for item in all_video_url:
         single_download_video(item, True)
 
 
-# 批量下载收藏夹视频，如果第二个参数>0, 则只截取第一页的前slice_count个视频下载
+# 批量下载收藏夹视频，如果第二个参数>0, 则只截取前slice_count个视频下载
 def batch_download_fav_video(batch_url, slice_count=0):
     # 把所有的视频URL放到一个列表中
     all_video_url = []
@@ -323,6 +322,7 @@ def batch_download_fav_video(batch_url, slice_count=0):
     html = requests_get.text
     # print(html)
     logging.error(html)
+    return
     # 解析数据
     # 先找up主的名字和视频数量以及视频的URL地址
     etree_html = etree.HTML(html)
@@ -365,8 +365,6 @@ def batch_download_fav_video(batch_url, slice_count=0):
         #         all_video_url.append(PREFIX_BATCH_URL + href)
         # all_video_url = list(set(all_video_url))  # 去重
 
-    # 创建目录
-    fileutil.create_directory(VIDEO_DIR)
 
     # 下载
     for item in all_video_url:
@@ -375,6 +373,6 @@ def batch_download_fav_video(batch_url, slice_count=0):
 
 if __name__ == '__main__':
     # single_download_video(URL, False)  # 12.328634262084961 S
-    single_download_video(URL, True)  # 8.814500570297241 S
+    # single_download_video(URL, True)  # 8.814500570297241 S
     # batch_download_upper_video(BATCH_URL, 3)
-    # batch_download_fav_video(BATCH_FAV_URL, 2)
+    batch_download_fav_video(BATCH_FAV_URL, 2)
