@@ -22,10 +22,14 @@ from lxml import etree  # lxml:解析HTML内容  导入了 lxml 库的 etree 模
 import json  # 解析JSON数据
 from tqdm import tqdm  # 在控制台显示进度条
 from concurrent.futures import ThreadPoolExecutor, as_completed  # 提供异步执行的能力
+import subprocess
 import os
 import pprint
 import time
-import logging
+from common import logutil
+from common import fileutil
+from common import jsonutil
+
 
 # 1.确定url地址
 
@@ -52,7 +56,7 @@ VIDEO_DIR = 'E:/Video/Afun/j_2024年5月15日005857'
 PAGE_SIZE_UPPER = 20
 PAGE_SIZE_FAV = 30
 
-logging.basicConfig(filename='error_log.txt', level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+logging = logutil.init_logger('', 'error_log')
 
 cookie = '_did=web_1919071475B7ED70; _did=web_1919071475B7ED70; lsv_js_player_v2_main=e4d400; acPasstoken=ChVpbmZyYS5hY2Z1bi5wYXNzdG9rZW4ScF2AZBASWJBFsWB0xB39NEqKKelTamMDfm8scx1mth7iVfK8w74NlNLBA1QLQYQENIbtkrsTPGmyPWZkOneQKIOCePekEYm_3adZb5xTPiLgoXNKuVUxpYhgwiazGRXudj8VWgPlZY--4kEL1wsxV9waEpeyvoxdTP1KmaSqp4F28QDqNSIgbVND-loy2pzkwFGTBTFU_jYdl6IB5psALRWxpIi2M7EoBTAB; auth_key=19410036; ac_username=%E5%A4%A9%E6%B6%AF%E8%B7%AF2; acPostHint=5b56db99e87800bdb756f41e3b687e1123e6; ac_userimg=https%3A%2F%2Fimgs.aixifan.com%2Fstyle%2Fimage%2F201908%2FGEf9kCBCmahRBHsZJc5clycPZnjUSMRe.jpg; csrfToken=hHS89B7bZVBMB-JW1inwluSF; cur_req_id=681665908DF22CE2_self_2d45c537a4f93b4689463857c3114dd1; cur_group_id=681665908DF22CE2_self_2d45c537a4f93b4689463857c3114dd1_0; webp_supported=%7B%22lossy%22%3Atrue%2C%22lossless%22%3Atrue%2C%22alpha%22%3Atrue%2C%22animation%22%3Atrue%7D; Hm_lvt_2af69bc2b378fb58ae04ed2a04257ed1=1715273236,1715445319,1715704642,1715791911; safety_id=AAI3eYMjDISBr2-FAIkGDXAu; Hm_lpvt_2af69bc2b378fb58ae04ed2a04257ed1=1715794631'
 # 请求头，模拟浏览器访问
@@ -86,7 +90,7 @@ def get_video_info_and_title(url):
     # re.S：标志参数，表示在匹配时考虑换行符。因为正则表达式中的 . 默认不匹配换行符
     videoInfo = re.findall(r"window.pageInfo = window.videoInfo = (.*?);", html, re.S)
     videoInfo = videoInfo[0] if (len(videoInfo) > 0) else '未定义的videoInfo'
-    if not is_valid_json(videoInfo):
+    if not jsonutil.is_valid_json(videoInfo):
         print('JSON 非法')
         videoInfo = get_video_info_again(html)
     print(videoInfo)
@@ -112,51 +116,29 @@ def get_video_info_again(text):
 def parse_data(videoInfo):
     # 解析JSON数据
     ksPlayJson = json.loads(videoInfo)['currentVideoInfo']['ksPlayJson']
-    # print(ksPlayJson)
+    print(ksPlayJson)
     representation = json.loads(ksPlayJson)['adaptationSet'][0]['representation']
     backupUrl = representation[0]['backupUrl'][0]  # 视频的URL地址
+
+    cover_img_info = json.loads(videoInfo)['coverImgInfo']
+    cover_image_url = cover_img_info['thumbnailImage']['cdnUrls'][0]['url']
+    print(f'cover_image_url--> {cover_image_url}')
+
     # 请求视频数据
     m3u8_data = requests.get(url=backupUrl, headers=headers)
     m3u8_data.encoding = 'utf-8'
-    print(m3u8_data.text)
+    # print(m3u8_data.text)
     # 使用正则表达式找到所有的视频片段URL
     segments = re.findall(r",\n(.*?)\n#E", m3u8_data.text, re.S)
-    return segments
-
-
-# 下载视频
-def download_video(segments, title, name):
-    start_time = time.time()
-    total_segment = 0
-    for item in tqdm(segments):
-        # 拼接视频的URL地址
-        m3u8_download_url = f'{PREFIX_URL}/{item}'
-        # print(m3u8_download_url)
-        # 下载视频数据
-        video_get = requests.get(url=m3u8_download_url, headers=headers)
-        if video_get.status_code != 200:
-            pprint.pprint(f"{title}.mp4下载失败，丢失片段{m3u8_download_url}，状态码：{video_get.status_code}")
-            continue
-        else:
-            total_segment += 1
-            video_dir = f"{VIDEO_DIR}/{name}" if name else VIDEO_DIR
-            if not os.path.exists(video_dir):
-                os.makedirs(video_dir)
-            video = video_get.content
-            with open(f"{video_dir}/{title}.mp4", 'ab') as f:  # append binary
-                f.write(video)
-                f.close()
-    end_time = time.time()
-    print(f"下载完成 {title}.mp4 \n完成率：{total_segment}/{len(segments)}")
-    print(f'用时：{end_time - start_time} S')
+    return segments, cover_image_url
 
 
 # 第三步：下载视频片段
 def download_segment(args):
     # 下载单个视频片段
-    index, segment_url, video_dir, title = args
+    index, segment_url, title = args
     segment_url = segment_url if (segment_url.startswith('http')) else f'{PREFIX_URL}/{segment_url}'
-    temp_filename = f"{video_dir}/temp_{index:05d}.ts"
+    temp_filename = f"{VIDEO_DIR}/temp_{index:05d}.ts"
     try:
         # print(f'\nsegment url --> {segment_url}')
         response = requests.get(url=segment_url, headers=headers)
@@ -181,15 +163,12 @@ def merge_video_segments(segment_files, final_path):
 
 
 # 第四步：并发下载和合并视频
-def download_video_concurrently(segments, title, name):
+def download_video_concurrently(segments, final_name):
     start_time = time.time()
-    video_dir = f"{VIDEO_DIR}/{name}" if name else VIDEO_DIR
-    if not os.path.exists(video_dir):
-        os.makedirs(video_dir)
-    final_path = f"{video_dir}/{title}.mp4"
+    title = final_name.split('/')[-1]
     segment_urls = [segment_url for segment_url in segments]
     # 准备下载任务
-    tasks = [(index, segment_url, video_dir, title) for index, segment_url in
+    tasks = [(index, segment_url, title) for index, segment_url in
              enumerate(segment_urls)]  # enumerate() 函数用于将一个可遍历的数据对象（如列表、元组或字符串）组合为一个索引序列，同时列出数据和数据下标
     # 存储临时文件名
     segment_files = [None] * len(segments)  # [None] * len(segments) 使用乘法操作符创建了一个包含 None 元素的列表，其长度等于 segments 列表的长度
@@ -201,55 +180,78 @@ def download_video_concurrently(segments, title, name):
                 segment_files[index] = temp_file
     # 合并视频片段
     if all(segment_files):
-        merge_video_segments(segment_files, final_path)
+        merge_video_segments(segment_files, final_name)
         end_time = time.time()
-        print(f"视频合并完成({len(segment_files)}/{len(segments)})：{final_path}")
+        print(f"视频合并完成({len(segment_files)}/{len(segments)})：{final_name}")
         print(f"用时：{end_time - start_time} S")
     else:
         print("某些片段下载失败，视频可能不完整")
 
 
-def single_download_video(url, name='', isConcurrently=True):
-    videoInfo, title = get_video_info_and_title(url)
-    return
-    findall = parse_data(videoInfo)
-    if isConcurrently:
-        download_video_concurrently(findall, title, name)
-    else:
-        download_video(findall, title, name)
-
-
-def test():
-    html = "<div class='video-description clearfix'><h1 " \
-           'class="title"><span>【温】全皮肤盛宴_(:з」∠)_你喜欢的我都有！</span></h1><div> '
-    etree_html = etree.HTML(html)
-    # pprint.pprint(f'etree_html --> {etree_html}')
-    # nodes_with_class = etree_html.xpath("//div[@class='video-description clearfix']")
-    title = etree_html.xpath('//div[@class="video-description clearfix"]/h1/span/text()')
-    # pprint.pprint(f'title --> {title}')
-    title = title[0] if (len(title) > 0) else '未定义的title'
-    print(f'title --> {title}')
-
-
-# 判断JSON是否合法
-def is_valid_json(json_str):
-    try:
-        json.loads(json_str)
-        return True
-    except json.JSONDecodeError:
-        return False
-
-
-# 目录不存在时创建目录
-def create_directory(directory_path):
-    try:
-        if not os.path.exists(directory_path):
-            os.makedirs(directory_path)
-            print(f"目录'{directory_path}'已创建")
+# 下载视频
+def download_video(segments, final_name):
+    start_time = time.time()
+    total_segment = 0
+    title = final_name.split('/')[-1]
+    for item in tqdm(segments):
+        # 拼接视频的URL地址
+        m3u8_download_url = f'{PREFIX_URL}/{item}'
+        # print(m3u8_download_url)
+        # 下载视频数据
+        video_get = requests.get(url=m3u8_download_url, headers=headers)
+        if video_get.status_code != 200:
+            pprint.pprint(f"{title} 下载失败，丢失片段{m3u8_download_url}，状态码：{video_get.status_code}")
+            continue
         else:
-            print(f"目录'{directory_path}'已存在")
+            total_segment += 1
+            video = video_get.content
+            with open(final_name, 'ab') as f:  # append binary
+                f.write(video)
+                f.close()
+    end_time = time.time()
+    print(f"下载完成 {title} \n完成率：{total_segment}/{len(segments)}")
+    print(f'用时：{end_time - start_time} S')
+
+
+def get_file_name(title):
+    fileutil.create_directory(VIDEO_DIR)
+    final_name = f"{VIDEO_DIR}/{title}.mp4"
+    return final_name
+
+
+def merge_video_cover_img(video_path, cover_url):
+    title = video_path.split('/')[-1]
+    ori_path = video_path.split('.')[0]
+    temp_name = f'{ori_path}___without_cover.mp4'
+    # 原文件先重命名为临时文件
+    os.rename(video_path, temp_name)
+
+    # 视频添加封面图
+    ret = -1
+    try:
+        ret = subprocess.call(f'ffmpeg -i {temp_name} -i {cover_url} -map 0 -map 1 -c copy -c:v:1 png '
+                              f'-disposition:v:1 attached_pic {video_path}', shell=True)
+        print(f'{title} execute cmd result -> {ret}')
     except Exception as e:
-        print(f"创建目录时发生错误：{e}")
+        logging.error(f'{title} 添加封面图时出错：{str(e)}')
+        print(f'{title} 添加封面图时出错 -> ', e)
+    # 删除临时文件
+    if ret == 0:
+        os.remove(temp_name)
+
+
+def single_download_video(url, isConcurrently=True):
+    videoInfo, title = get_video_info_and_title(url)
+    findall, cover_image_url = parse_data(videoInfo)
+    final_name = get_file_name(title)
+    print(f'final_name --> {final_name}')
+    # return
+    if isConcurrently:
+        download_video_concurrently(findall, final_name)
+    else:
+        download_video(findall, final_name)
+
+    merge_video_cover_img(final_name, cover_image_url)
 
 
 # 批量下载up主的视频，如果第二个参数>0, 则只截取第一页的前slice_count个视频下载
@@ -304,11 +306,11 @@ def batch_download_upper_video(batch_url, slice_count=0):
         all_video_url = list(set(all_video_url))  # 去重
 
     # 创建目录
-    create_directory(f"{VIDEO_DIR}/{name}")
+    fileutil.create_directory(f"{VIDEO_DIR}/{name}")
 
     # 下载
     for item in all_video_url:
-        single_download_video(item, name, True)
+        single_download_video(item, True)
 
 
 # 批量下载收藏夹视频，如果第二个参数>0, 则只截取第一页的前slice_count个视频下载
@@ -364,16 +366,15 @@ def batch_download_fav_video(batch_url, slice_count=0):
         # all_video_url = list(set(all_video_url))  # 去重
 
     # 创建目录
-    create_directory(VIDEO_DIR)
+    fileutil.create_directory(VIDEO_DIR)
 
     # 下载
     for item in all_video_url:
-        single_download_video(item, '', True)
+        single_download_video(item, True)
 
 
 if __name__ == '__main__':
-    # test()
-    # single_download_video(URL, '测试', False)  # 12.328634262084961 S
-    single_download_video(URL, '', True)  # 8.814500570297241 S
+    # single_download_video(URL, False)  # 12.328634262084961 S
+    single_download_video(URL, True)  # 8.814500570297241 S
     # batch_download_upper_video(BATCH_URL, 3)
     # batch_download_fav_video(BATCH_FAV_URL, 2)
