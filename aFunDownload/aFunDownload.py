@@ -40,7 +40,8 @@ from common import jsonutil
 # URL = "https://www.acfun.cn/v/ac35582241"
 # URL = "https://www.acfun.cn/v/ac35437039"
 # URL = "https://www.acfun.cn/v/ac44546118"
-URL = "https://www.acfun.cn/v/ac44581895"
+# URL = "https://www.acfun.cn/v/ac44581895"
+URL = "https://www.acfun.cn/v/ac44606386"
 # URL = 'https://www.acfun.cn/u/56776847?quickViewId=ac-space-video-list&reqID=2&ajaxpipe=1&type=video&order=newest&page=1&pageSize=20&t=1705985425289'
 # 视频前缀
 PREFIX_URL = "https://ali-safety-video.acfun.cn/mediacloud/acfun/acfun_video"
@@ -75,7 +76,7 @@ def get_video_info_and_title(url):
     response.encoding = "utf-8"
     html = response.text
     # pprint.pprint(f'html: {html}')
-    # logging.error(html)
+    logging.error(html)
 
     # 3.解析数据，先找标题
     # 使用lxml和正则表达式解析HTML
@@ -96,8 +97,7 @@ def get_video_info_and_title(url):
         videoInfo = get_video_info_again(html)
     print(videoInfo)
 
-    # logging.error('alkfdjadsl')
-    # logging.error(videoInfo)
+    logging.error(videoInfo)
     return videoInfo, title
 
 
@@ -244,17 +244,21 @@ def merge_video_cover_img(video_path, cover_url):
 
 def single_download_video(url, isConcurrently=True):
     videoInfo, title = get_video_info_and_title(url)
-    findall, cover_image_url = parse_data(videoInfo)
-    final_name = get_file_name(title)
-    print(f'final_name --> {final_name}')
-    # return
-    # 下载视频
-    if isConcurrently:
-        download_video_concurrently(findall, final_name)
+    videoListJson = json.loads(videoInfo)['videoList']
+    if len(videoListJson) > 1:
+        print('视频列表数量大于1，需分别下载')
     else:
-        download_video(findall, final_name)
-    # 添加视频封面
-    merge_video_cover_img(final_name, cover_image_url)
+        findall, cover_image_url = parse_data(videoInfo)
+        final_name = get_file_name(title)
+        print(f'final_name --> {final_name}')
+        return
+        # 下载视频
+        if isConcurrently:
+            download_video_concurrently(findall, final_name)
+        else:
+            download_video(findall, final_name)
+        # 添加视频封面
+        merge_video_cover_img(final_name, cover_image_url)
 
 
 # 批量下载up主的视频，如果第二个参数>0, 则只截取前slice_count个视频下载
