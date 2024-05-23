@@ -41,7 +41,7 @@ from common import jsonutil
 # URL = "https://www.acfun.cn/v/ac35437039"
 # URL = "https://www.acfun.cn/v/ac44546118"
 # URL = "https://www.acfun.cn/v/ac44581895"
-URL = "https://www.acfun.cn/v/ac44606386"
+URL = "https://www.acfun.cn/v/ac44616235"
 # URL = 'https://www.acfun.cn/u/56776847?quickViewId=ac-space-video-list&reqID=2&ajaxpipe=1&type=video&order=newest&page=1&pageSize=20&t=1705985425289'
 # 视频前缀
 PREFIX_URL = "https://ali-safety-video.acfun.cn/mediacloud/acfun/acfun_video"
@@ -251,7 +251,7 @@ def single_download_video(url, isConcurrently=True):
         findall, cover_image_url = parse_data(videoInfo)
         final_name = get_file_name(title)
         print(f'final_name --> {final_name}')
-        return
+        # return
         # 下载视频
         if isConcurrently:
             download_video_concurrently(findall, final_name)
