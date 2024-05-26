@@ -42,7 +42,7 @@ from common import ffmpegutil
 # URL = "https://www.acfun.cn/v/ac35437039"
 # URL = "https://www.acfun.cn/v/ac44546118"
 # URL = "https://www.acfun.cn/v/ac44581895"
-URL = "https://www.acfun.cn/v/ac44616235"
+URL = "https://www.acfun.cn/v/ac44606386"
 # URL = 'https://www.acfun.cn/u/56776847?quickViewId=ac-space-video-list&reqID=2&ajaxpipe=1&type=video&order=newest&page=1&pageSize=20&t=1705985425289'
 # 视频前缀
 PREFIX_URL = "https://ali-safety-video.acfun.cn/mediacloud/acfun/acfun_video"
@@ -102,6 +102,7 @@ def get_video_info_and_title(url):
     return videoInfo, title
 
 
+# 获取视频信息失败时换另一种方法尝试
 def get_video_info_again(text):
     # 定义正则表达式模式
     pattern = r'window\.pageInfo\s*=\s*window\.videoInfo\s*=\s*({.*?};)'
@@ -190,7 +191,7 @@ def download_video_concurrently(segments, final_name):
         print("某些片段下载失败，视频可能不完整")
 
 
-# 下载视频
+# 真正下载视频（干活的）的方法
 def download_video(segments, final_name):
     start_time = time.time()
     total_segment = 0
@@ -215,9 +216,10 @@ def download_video(segments, final_name):
     print(f'用时：{end_time - start_time} S')
 
 
-def get_file_name(title):
+def get_file_name(title, multi_p_name):
     fileutil.create_directory(VIDEO_DIR)
-    final_name = f"{VIDEO_DIR}/{title}.mp4"
+    p_name = f'【{multi_p_name}】' if multi_p_name else ''
+    final_name = f"{VIDEO_DIR}/{title}{p_name}.mp4"
     return final_name
 
 
@@ -237,14 +239,18 @@ def merge_video_cover_img(final_name, cover_image_url):
             logging.error(f'{final_name} 添加本地封面图失败')
 
 
-def single_download_video(url, isConcurrently=True):
+# 下载单个页面视频（可能有多P）
+def single_download_video(url, isConcurrently=True, multi_p_name=''):
     videoInfo, title = get_video_info_and_title(url)
     videoListJson = json.loads(videoInfo)['videoList']
-    if len(videoListJson) > 1:
+    if len(videoListJson) > 1 and multi_p_name == '':
         print('视频列表数量大于1，需分别下载')
+        p_urls, p_names = get_multi_p_name_url(url)
+        for i in range(len(p_urls)):
+            single_download_video(p_urls[i], isConcurrently, p_names[i])
     else:
         findall, cover_image_url = parse_data(videoInfo)
-        final_name = get_file_name(title)
+        final_name = get_file_name(title, multi_p_name)
         print(f'final_name --> {final_name}')
         # return
         # 下载视频
@@ -254,6 +260,29 @@ def single_download_video(url, isConcurrently=True):
             download_video(findall, final_name)
         # 添加视频封面
         merge_video_cover_img(final_name, cover_image_url)
+
+
+# 获取多P的URL和P name
+def get_multi_p_name_url(url):
+    # 发请求获取页面数据
+    response = requests.get(url=url, headers=headers)
+    response.encoding = "utf-8"
+    html = response.text
+    logging.error(html)
+
+    # 解析数据，先找标题
+    # 使用lxml和正则表达式解析HTML
+    etree_html = etree.HTML(html)
+    # 找到视频的URL地址
+    hrefs = etree_html.xpath("//li[contains(@class, 'single-p')]/@data-href")
+    # print(f'hrefs-->{hrefs}')
+    p_names = etree_html.xpath("//li[contains(@class, 'single-p')]/text()")
+    # print(f'p_names-->{p_names}')
+    p_urls = []
+    for item in hrefs:
+        p_urls.append(f'{PREFIX_BATCH_URL}{item}')
+    # print(f'urls --> {p_urls}')
+    return p_urls, p_names
 
 
 # 批量下载up主的视频，如果第二个参数>0, 则只截取前slice_count个视频下载
