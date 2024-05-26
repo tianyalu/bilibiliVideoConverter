@@ -29,6 +29,7 @@ import time
 from common import logutil
 from common import fileutil
 from common import jsonutil
+from common import ffmpegutil
 
 
 # 1.确定url地址
@@ -220,26 +221,20 @@ def get_file_name(title):
     return final_name
 
 
-def merge_video_cover_img(video_path, cover_url):
-    title = video_path.split('/')[-1]
-    ori_path = video_path.split('.')[0]
-    temp_name = f'{ori_path}___without_cover.mp4'
-    # 原文件先重命名为临时文件
-    os.rename(video_path, temp_name)
-
-    # 视频添加封面图
-    ret = -1
-    try:
-        cmd_str = f'ffmpeg -i {temp_name} -i {cover_url} -map 0 -map 1 -c copy -c:v:1 png -disposition:v:1 attached_pic {video_path}'
-        print('cmd_str-->', cmd_str)
-        ret = subprocess.call(cmd_str, shell=True)
-        print(f'{title} execute cmd result -> {ret}')
-    except Exception as e:
-        logging.error(f'{title} 添加封面图时出错：{str(e)}')
-        print(f'{title} 添加封面图时出错 -> ', e)
-    # 删除临时文件
+# 添加视频封面：如果网络封面添加失败,截取视频的第100帧作为封面
+def merge_video_cover_img(final_name, cover_image_url):
+    ret, err_msg = ffmpegutil.add_remote_cover(final_name, cover_image_url)
     if ret == 0:
-        os.remove(temp_name)
+        print(f'{final_name} 添加网络封面图 {cover_image_url} 成功')
+    else:
+        print(f'{final_name} 添加网络封面图 {cover_image_url} 失败')
+        logging.error(f'{final_name} 添加网络封面图 {cover_image_url} 失败')
+        ret, err_msg = ffmpegutil.add_local_cover(final_name)
+        if ret == 0:
+            print(f'{final_name} 添加本地封面图成功')
+        else:
+            print(f'{final_name} 添加本地封面图失败')
+            logging.error(f'{final_name} 添加本地封面图失败')
 
 
 def single_download_video(url, isConcurrently=True):
@@ -372,7 +367,6 @@ def batch_download_fav_video(batch_url, slice_count=0):
         #         all_video_url.append(PREFIX_BATCH_URL + href)
         # all_video_url = list(set(all_video_url))  # 去重
 
-
     # 下载
     for item in all_video_url:
         single_download_video(item, True)
@@ -382,4 +376,4 @@ if __name__ == '__main__':
     # single_download_video(URL, False)  # 12.328634262084961 S
     single_download_video(URL, True)  # 8.814500570297241 S
     # batch_download_upper_video(BATCH_URL, 3)
-    # batch_download_fav_video(BATCH_FAV_URL, 2)
+    # batch_download_fav_video(BATCH_FAV_URL, 3)
