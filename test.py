@@ -26,6 +26,14 @@ def test_slice():
     print(str)
 
 
+def test_break():
+    for i in range(10):
+        if i == 5:
+            break
+        print(i)
+
+
 if __name__ == '__main__':
     # test()
-    test_slice()
+    # test_slice()
+    test_break()

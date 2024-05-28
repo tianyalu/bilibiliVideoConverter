@@ -319,10 +319,10 @@ def batch_download_upper_video(batch_url, slice_count=0):
     hrefs = etree_html.xpath("//div[@id='ac-space-video-list']/a/@href")
     # 先装第一页的视频URL地址
     all_video_url = [PREFIX_BATCH_URL + href for href in hrefs]
-    all_video_url = list(set(all_video_url))  # 去重
+    # all_video_url = list(set(all_video_url))  # 去重
 
     # 截取前slice_count个视频下载
-    if slice_count > 0 and len(all_video_url) <= PAGE_SIZE_UPPER:
+    if 0 < slice_count <= len(all_video_url):
         all_video_url = all_video_url[:slice_count]
     else:
         # 找到下一页的url地址，根据num判断页数 一页20个视频
@@ -344,6 +344,9 @@ def batch_download_upper_video(batch_url, slice_count=0):
                 # href /v/ac42368063\\ 去 \\
                 href = href.replace('\\', '')
                 all_video_url.append(PREFIX_BATCH_URL + href)
+            if len(all_video_url) >= slice_count:
+                break
+
         if slice_count > 0:
             all_video_url = all_video_url[:slice_count]
         # all_video_url = list(set(all_video_url))  # 去重
@@ -365,15 +368,15 @@ def batch_download_fav_video(batch_url, slice_count=0):
     requests_get = requests.get(url=batch_url, headers=headers)
     requests_get.encoding = "utf-8"
     html = requests_get.text
-    # logging.error(html)
+    logging.error(html)
     # return
     # 解析数据
     # 先找up主的名字和视频数量以及视频的URL地址
     etree_html = etree.HTML(html)
     # 视频总数量
-    # num = etree_html.xpath("//li[@class='active']/span/text()")
-    # num = num[0] if (len(num) > 0) else 0
-    # print(f"视频总数量：{num}")
+    pages = etree_html.xpath("//li[contains(@class, 'ac-pager-item')]/a/text()")
+    page = int(pages[-1]) if (len(pages) > 0) else 0   # 取最后一页的页号
+    print(f"视频总页数：{page}")
 
     # 找到视频的URL地址
     hrefs = etree_html.xpath("//div[@class='ac-member-favourite-douga-item-cover ']/a/@href")
@@ -386,32 +389,37 @@ def batch_download_fav_video(batch_url, slice_count=0):
     # 统计
     reset_counter()
     # 截取前slice_count个视频下载
-    if slice_count > 0 and len(all_video_url) <= PAGE_SIZE_FAV:
+    if 0 < slice_count <= len(all_video_url):
         all_video_url = all_video_url[:slice_count]
-        globaldata.add_total_count(len(all_video_url))
     else:
-        print('else branch todo')
-        # 找到下一页的url地址，根据num判断页数 一页30个视频
-        # 页数
-        # page = int(num) // PAGE_SIZE_FAV + 1
-        # # 下一页的URL地址
-        # for i in range(2, page + 1):  # 从第二页开始，因为第一页已经装了
-        #     # 获取当前时间戳
-        #     current_timestamp = time.time()
-        #     next_url = batch_url + f"?quickViewId=ac-space-video-list&reqID={i}&ajaxpipe=1&type=video&order=newest&page={i}&pageSize=20&t={current_timestamp}"
-        #     print(next_url)
-        #     # 发请求获取页面数据
-        #     requests_get = requests.get(url=next_url, headers=headers)
-        #     requests_get.encoding = 'utf-8'
-        #     html = requests_get.text
-        #     # 解析数据 使用正则
-        #     hrefs = re.findall(r'href=\\"(.*?)"', html, re.S)
-        #     for href in hrefs:
-        #         # href /v/ac42368063\\ 去 \\
-        #         href = href.replace('\\', '')
-        #         all_video_url.append(PREFIX_BATCH_URL + href)
-        # all_video_url = list(set(all_video_url))  # 去重
+        # 下一页的URL地址
+        for i in range(2, page + 1):  # 从第二页开始，因为第一页已经装了
+            # 获取当前时间戳
+            current_timestamp = time.time()
+            next_url = batch_url + f"?quickViewId=ac-space-video-list&reqID={i}&ajaxpipe=1&type=video&order=newest&page={i}&pageSize=20&t={current_timestamp}"
+            print(next_url)
+            # 发请求获取页面数据
+            requests_get = requests.get(url=next_url, headers=headers)
+            requests_get.encoding = 'utf-8'
+            html = requests_get.text
+            # logging.error(html)
 
+            etree_html = etree.HTML(html)
+            hrefs = etree_html.xpath("//div[@class='ac-member-favourite-douga-item-cover ']/a/@href")
+            print(f'hrefs => {hrefs}')
+            for href in hrefs:
+                # href /v/ac42368063\\ 去 \\
+                href = href.replace('\\', '')
+                all_video_url.append(PREFIX_BATCH_URL + href)
+            if len(all_video_url) >= slice_count:
+                break
+
+        print(f'视频数量1：{len(all_video_url)}')
+        if slice_count > 0:
+            all_video_url = all_video_url[:slice_count]
+        # all_video_url = list(set(all_video_url))  # 去重
+        print(f'视频数量2：{len(all_video_url)}')
+    return
     # 统计数据
     reset_counter()
     globaldata.add_total_count(len(all_video_url))
@@ -428,6 +436,7 @@ def reset_counter():
 
 if __name__ == '__main__':
     # single_download_video(URL, False)  # 12.328634262084961 S
-    single_download_video(URL, True)  # 8.814500570297241 S
+    # single_download_video(URL, True)  # 8.814500570297241 S
     # batch_download_upper_video(BATCH_URL, 3)
     # batch_download_fav_video(BATCH_FAV_URL, 3)
+    batch_download_fav_video(BATCH_FAV_URL, 36)
