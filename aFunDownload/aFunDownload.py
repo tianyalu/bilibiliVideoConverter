@@ -48,11 +48,13 @@ URL = "https://www.acfun.cn/v/ac44606386"
 # URL = 'https://www.acfun.cn/u/56776847?quickViewId=ac-space-video-list&reqID=2&ajaxpipe=1&type=video&order=newest&page=1&pageSize=20&t=1705985425289'
 # 视频前缀
 PREFIX_URL = "https://ali-safety-video.acfun.cn/mediacloud/acfun/acfun_video"
+PREFIX_BATCH_FAV_URL = "https://www.acfun.cn/rest/pc-direct/favorite/resource/dougaList"
 
 # 批量下载（下载一个up主的所有视频）
 # 批量下载的URL
 BATCH_URL = "https://www.acfun.cn/u/56776847"
 BATCH_FAV_URL = "https://www.acfun.cn/member/favourite/folder/74465596"
+# BATCH_FAV_URL = "https://www.acfun.cn/member/favourite/folder/2253823"
 # 视频前缀
 PREFIX_BATCH_URL = "https://www.acfun.cn"
 
@@ -368,7 +370,7 @@ def batch_download_fav_video(batch_url, slice_count=0):
     requests_get = requests.get(url=batch_url, headers=headers)
     requests_get.encoding = "utf-8"
     html = requests_get.text
-    logging.error(html)
+    # logging.error(html)
     # return
     # 解析数据
     # 先找up主的名字和视频数量以及视频的URL地址
@@ -384,7 +386,7 @@ def batch_download_fav_video(batch_url, slice_count=0):
     # 先装第一页的视频URL地址
     all_video_url = [PREFIX_BATCH_URL + href for href in hrefs]
     # all_video_url = list(set(all_video_url))  # 去重
-    print(f'all_video_url[{len(all_video_url)}]--> {all_video_url}')
+    # print(f'all_video_url[{len(all_video_url)}]--> {all_video_url}')
 
     # 统计
     reset_counter()
@@ -393,33 +395,33 @@ def batch_download_fav_video(batch_url, slice_count=0):
         all_video_url = all_video_url[:slice_count]
     else:
         # 下一页的URL地址
+        folder_id = BATCH_FAV_URL.split('/')[-1]
         for i in range(2, page + 1):  # 从第二页开始，因为第一页已经装了
-            # 获取当前时间戳
-            current_timestamp = time.time()
-            next_url = batch_url + f"?quickViewId=ac-space-video-list&reqID={i}&ajaxpipe=1&type=video&order=newest&page={i}&pageSize=20&t={current_timestamp}"
-            print(next_url)
-            # 发请求获取页面数据
-            requests_get = requests.get(url=next_url, headers=headers)
-            requests_get.encoding = 'utf-8'
-            html = requests_get.text
-            # logging.error(html)
-
-            etree_html = etree.HTML(html)
-            hrefs = etree_html.xpath("//div[@class='ac-member-favourite-douga-item-cover ']/a/@href")
-            print(f'hrefs => {hrefs}')
-            for href in hrefs:
-                # href /v/ac42368063\\ 去 \\
-                href = href.replace('\\', '')
-                all_video_url.append(PREFIX_BATCH_URL + href)
             if len(all_video_url) >= slice_count:
                 break
+            param = {
+                'folderId': folder_id,
+                'page': i,
+                'perpage': PAGE_SIZE_FAV
+            }
+            # print(param)
+            # 发请求获取页面数据
+            requests_post = requests.post(url=PREFIX_BATCH_FAV_URL, data=param, headers=headers)
+            # requests_post.encoding = 'utf-8'
+            html = requests_post.text
+            logging.error(html)
+            favorite_list = json.loads(html)['favoriteList']
+
+            for item in favorite_list:
+                all_video_url.append(f'{PREFIX_BATCH_URL}/v/ac{item["contentId"]}')
 
         print(f'视频数量1：{len(all_video_url)}')
+        # print(f'url -->', all_video_url)
         if slice_count > 0:
             all_video_url = all_video_url[:slice_count]
         # all_video_url = list(set(all_video_url))  # 去重
         print(f'视频数量2：{len(all_video_url)}')
-    return
+
     # 统计数据
     reset_counter()
     globaldata.add_total_count(len(all_video_url))
@@ -438,5 +440,4 @@ if __name__ == '__main__':
     # single_download_video(URL, False)  # 12.328634262084961 S
     # single_download_video(URL, True)  # 8.814500570297241 S
     # batch_download_upper_video(BATCH_URL, 3)
-    # batch_download_fav_video(BATCH_FAV_URL, 3)
-    batch_download_fav_video(BATCH_FAV_URL, 36)
+    batch_download_fav_video(BATCH_FAV_URL, 4)
