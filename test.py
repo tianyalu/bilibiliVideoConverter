@@ -13,5 +13,19 @@ def test():
     print(f'title --> {title}')
 
 
+def test_slice():
+    s = '1234567'
+    last_4_digits = s[-4:]
+    # str = s[:]  # 1234567
+    # str = s[2:5]  # 345
+    # str = s[:5]  # 12345
+    # str = s[5:]  # 67
+    # str = s[:-4]  # 123
+    str = s[-6:-4]  # 23
+    print(f'last_4_digits: {last_4_digits}')
+    print(str)
+
+
 if __name__ == '__main__':
-    test()
+    # test()
+    test_slice()

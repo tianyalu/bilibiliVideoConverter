@@ -26,10 +26,12 @@ import subprocess
 import os
 import pprint
 import time
+from datetime import datetime
 from common import logutil
 from common import fileutil
 from common import jsonutil
 from common import ffmpegutil
+from common import globaldata
 
 
 # 1.确定url地址
@@ -58,6 +60,9 @@ PREFIX_BATCH_URL = "https://www.acfun.cn"
 VIDEO_DIR = 'E:/Video/Afun/k_2024年5月20日005857'
 PAGE_SIZE_UPPER = 20
 PAGE_SIZE_FAV = 30
+# 统计
+total_count = 0
+succeed_count = 0
 
 logging = logutil.init_logger('', 'error_log')
 
@@ -76,8 +81,7 @@ def get_video_info_and_title(url):
     response = requests.get(url=url, headers=headers)
     response.encoding = "utf-8"
     html = response.text
-    # pprint.pprint(f'html: {html}')
-    logging.error(html)
+    # logging.error(html)
 
     # 3.解析数据，先找标题
     # 使用lxml和正则表达式解析HTML
@@ -98,7 +102,7 @@ def get_video_info_and_title(url):
         videoInfo = get_video_info_again(html)
     print(videoInfo)
 
-    logging.error(videoInfo)
+    # logging.error(videoInfo)
     return videoInfo, title
 
 
@@ -219,7 +223,9 @@ def download_video(segments, final_name):
 def get_file_name(title, multi_p_name):
     fileutil.create_directory(VIDEO_DIR)
     p_name = f'【{multi_p_name}】' if multi_p_name else ''
-    final_name = f"{VIDEO_DIR}/{title}{p_name}.mp4"
+    cur_time = datetime.now()
+    time_str = cur_time.strftime("%m%d%H%M%S")  # 添加时间戳避免重名覆盖
+    final_name = f"{VIDEO_DIR}/{title}{p_name}_{time_str}.mp4"
     return final_name
 
 
@@ -228,12 +234,14 @@ def merge_video_cover_img(final_name, cover_image_url):
     ret, err_msg = ffmpegutil.add_remote_cover(final_name, cover_image_url)
     if ret == 0:
         print(f'{final_name} 添加网络封面图 {cover_image_url} 成功')
+        globaldata.add_succeed_count(1)
     else:
         print(f'{final_name} 添加网络封面图 {cover_image_url} 失败')
         logging.error(f'{final_name} 添加网络封面图 {cover_image_url} 失败')
         ret, err_msg = ffmpegutil.add_local_cover(final_name)
         if ret == 0:
             print(f'{final_name} 添加本地封面图成功')
+            globaldata.add_succeed_count(1)
         else:
             print(f'{final_name} 添加本地封面图失败')
             logging.error(f'{final_name} 添加本地封面图失败')
@@ -246,6 +254,8 @@ def single_download_video(url, isConcurrently=True, multi_p_name=''):
     if len(videoListJson) > 1 and multi_p_name == '':
         print('视频列表数量大于1，需分别下载')
         p_urls, p_names = get_multi_p_name_url(url)
+        # 统计
+        globaldata.add_total_count(len(p_urls) - 1)
         for i in range(len(p_urls)):
             single_download_video(p_urls[i], isConcurrently, p_names[i])
     else:
@@ -268,7 +278,7 @@ def get_multi_p_name_url(url):
     response = requests.get(url=url, headers=headers)
     response.encoding = "utf-8"
     html = response.text
-    logging.error(html)
+    # logging.error(html)
 
     # 解析数据，先找标题
     # 使用lxml和正则表达式解析HTML
@@ -338,9 +348,13 @@ def batch_download_upper_video(batch_url, slice_count=0):
             all_video_url = all_video_url[:slice_count]
         # all_video_url = list(set(all_video_url))  # 去重
 
+    # 统计数据
+    reset_counter()
+    globaldata.add_total_count(len(all_video_url))
     # 下载
     for item in all_video_url:
         single_download_video(item, True)
+    print(f'批量下载视频完成：{globaldata.get_succeed_count()}/{globaldata.get_total_count()}')
 
 
 # 批量下载收藏夹视频，如果第二个参数>0, 则只截取前slice_count个视频下载
@@ -351,7 +365,6 @@ def batch_download_fav_video(batch_url, slice_count=0):
     requests_get = requests.get(url=batch_url, headers=headers)
     requests_get.encoding = "utf-8"
     html = requests_get.text
-    # print(html)
     # logging.error(html)
     # return
     # 解析数据
@@ -370,9 +383,12 @@ def batch_download_fav_video(batch_url, slice_count=0):
     # all_video_url = list(set(all_video_url))  # 去重
     print(f'all_video_url[{len(all_video_url)}]--> {all_video_url}')
 
+    # 统计
+    reset_counter()
     # 截取前slice_count个视频下载
     if slice_count > 0 and len(all_video_url) <= PAGE_SIZE_FAV:
         all_video_url = all_video_url[:slice_count]
+        globaldata.add_total_count(len(all_video_url))
     else:
         print('else branch todo')
         # 找到下一页的url地址，根据num判断页数 一页30个视频
@@ -396,9 +412,18 @@ def batch_download_fav_video(batch_url, slice_count=0):
         #         all_video_url.append(PREFIX_BATCH_URL + href)
         # all_video_url = list(set(all_video_url))  # 去重
 
+    # 统计数据
+    reset_counter()
+    globaldata.add_total_count(len(all_video_url))
     # 下载
     for item in all_video_url:
         single_download_video(item, True)
+    print(f'批量下载视频完成：{globaldata.get_succeed_count()}/{globaldata.get_total_count()}')
+
+
+def reset_counter():
+    globaldata.reset_total_count()
+    globaldata.reset_succeed_count()
 
 
 if __name__ == '__main__':
