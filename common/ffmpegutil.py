@@ -7,8 +7,9 @@ def get_video_cover(video_path, cover_img_path='thumb.png', n=100):
     ret = -1
     try:
         cmd_str = f'ffmpeg -i "{video_path}" -vf "select=eq(n\,{n})" -vframes 1 "{cover_img_path}"'
-        print('cmd_str-->', cmd_str)
-        ret = subprocess.call(cmd_str, shell=False)
+        # print('cmd_str-->', cmd_str)
+        # ret = subprocess.call(cmd_str, shell=True)
+        ret = subprocess.call(cmd_str, shell=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         return ret, 'success'
     except Exception as e:
         return ret, e
@@ -19,8 +20,9 @@ def add_cover_to_video(video_path_src, cover_url, video_path_dist):
     ret = -1
     try:
         cmd_str = f'ffmpeg -i "{video_path_src}" -i "{cover_url}" -map 0 -map 1 -c copy -c:v:1 png -disposition:v:1 attached_pic "{video_path_dist}"'
-        print('cmd_str-->', cmd_str)
-        ret = subprocess.call(cmd_str, shell=False)
+        # print('cmd_str-->', cmd_str)
+        # ret = subprocess.call(cmd_str, shell=True)
+        ret = subprocess.call(cmd_str, shell=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         return ret, ''
     except Exception as e:
         return ret, e
@@ -39,18 +41,18 @@ def add_local_cover(video_path):
         os.rename(video_path, temp_name)
         code, err_msg = add_cover_to_video(temp_name, cover_img_name, video_path)
         if code == 0:
-            print(f'{title} 添加封面图成功')
+            print(f'{title} 添加本地封面图成功')
             os.remove(cover_img_name)
             os.remove(temp_name)
             return code, 'success'
         else:
-            print(f'{title} 添加封面图时出错 -> ', err_msg)
+            print(f'{title} 添加本地封面图时出错 -> ', err_msg)
             if os.path.exists(video_path):
                 os.remove(video_path)
             os.rename(temp_name, video_path)  # 出错后还原原文件名
             return code, err_msg
     else:
-        print(f'{title} 获取封面图时出错 -> ', err_msg, ret)
+        print(f'{title} 获取本地封面图时出错 -> ', err_msg, ret)
         return ret, err_msg
 
 
@@ -64,11 +66,11 @@ def add_remote_cover(video_path, cover_url):
     os.rename(video_path, temp_name)
     code, err_msg = add_cover_to_video(temp_name, cover_url, video_path)
     if code == 0:
-        print(f'{title} 添加封面图成功')
+        print(f'{title} 添加网络封面图成功')
         os.remove(temp_name)
         return code, 'success'
     else:
-        print(f'{title} 添加封面图时出错 -> ', err_msg)
+        print(f'{title} 添加网络封面图时出错 -> ', err_msg)
         if os.path.exists(video_path):
             os.remove(video_path)
         os.rename(temp_name, video_path)  # 出错后还原原文件名

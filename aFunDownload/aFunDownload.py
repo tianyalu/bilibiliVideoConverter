@@ -45,12 +45,12 @@ PREFIX_BATCH_FAV_URL = "https://www.acfun.cn/rest/pc-direct/favorite/resource/do
 # 批量下载（下载一个up主的所有视频）
 # 批量下载的URL
 BATCH_URL = "https://www.acfun.cn/u/56776847"
-BATCH_FAV_URL = "https://www.acfun.cn/member/favourite/folder/74465596"
+BATCH_FAV_URL = "https://www.acfun.cn/member/favourite/folder/74501090"
 # 视频前缀
 PREFIX_BATCH_URL = "https://www.acfun.cn"
 
 # VIDEO_DIR = 'file/video'
-VIDEO_DIR = 'E:/Video/Afun/k_2024年5月20日005857'
+VIDEO_DIR = 'E:/Video/Afun/l_2024年5月30日001656'
 PAGE_SIZE_UPPER = 20
 PAGE_SIZE_FAV = 30
 # 统计
@@ -83,7 +83,7 @@ def get_video_info_and_title(url):
     # //div 会选择所有 <div> 元素，而 div 只会选择当前上下文节点的直接子级中的 <div> 元素
     title = etree_html.xpath('//div[@class="video-description clearfix"]/h1/span/text()')  # 只有一个标题 使用xpath来取
     title = title[0] if (len(title) > 0) else '未定义的title'
-    print(f'title-->{title}')
+    # print(f'title-->{title}')
     # 去除标题中的特殊字符
     title = re.sub(r"[\/\\\:\*\?\"\<\>\|\s]", "", title)  # 清理标题中的特殊字符
     # 再找视频的URL地址
@@ -122,7 +122,7 @@ def parse_data(videoInfo):
 
     cover_img_info = json.loads(videoInfo)['coverImgInfo']
     cover_image_url = cover_img_info['thumbnailImage']['cdnUrls'][0]['url']
-    print(f'cover_image_url--> {cover_image_url}')
+    # print(f'cover_image_url--> {cover_image_url}')
 
     # 请求视频数据
     m3u8_data = requests.get(url=backupUrl, headers=headers)
@@ -196,7 +196,7 @@ def download_video_concurrently(segments, final_name):
     if all(segment_files):
         merge_video_segments(segment_files, final_name)
         end_time = time.time()
-        print(f"视频合并完成({len(segment_files)}/{len(segments)})：{final_name}")
+        print(f"视频合并完成({len(segment_files)}/{len(segments)})：{title}")
         print(f"用时：{end_time - start_time} S")
     else:
         print("某些片段下载失败，视频可能不完整")
@@ -240,7 +240,7 @@ def get_file_name(title, multi_p_name):
 def merge_video_cover_img(final_name, cover_image_url):
     ret, err_msg = ffmpegutil.add_remote_cover(final_name, cover_image_url)
     if ret == 0:
-        print(f'{final_name} 添加网络封面图 {cover_image_url} 成功')
+        # print(f'{final_name} 添加网络封面图 {cover_image_url} 成功')
         globaldata.add_succeed_count(1)
     else:
         print(f'{final_name} 添加网络封面图 {cover_image_url} 失败')
@@ -268,7 +268,7 @@ def single_download_video(url, isConcurrently=True, multi_p_name=''):
     else:
         findall, cover_image_url = parse_data(videoInfo)
         final_name = get_file_name(title, multi_p_name)
-        print(f'final_name --> {final_name}')
+        # print(f'final_name --> {final_name}')
         # 下载视频
         if isConcurrently:
             download_video_concurrently(findall, final_name)
@@ -309,7 +309,7 @@ def batch_download_upper_video(batch_url, slice_count=0):
     requests_get = requests.get(url=batch_url, headers=headers)
     requests_get.encoding = "utf-8"
     html = requests_get.text
-    print(html)
+    # print(html)
     # 解析数据
     # 先找up主的名字和视频数量以及视频的URL地址
     etree_html = etree.HTML(html)
@@ -381,7 +381,7 @@ def batch_download_fav_video(batch_url, slice_count=0):
     etree_html = etree.HTML(html)
     # 视频总数量
     pages = etree_html.xpath("//li[contains(@class, 'ac-pager-item')]/a/text()")
-    page = int(pages[-1]) if (len(pages) > 0) else 0   # 取最后一页的页号
+    page = int(pages[-1]) if (len(pages) > 0) else 1   # 取最后一页的页号
     print(f"视频总页数：{page}")
 
     # 找到视频的URL地址
@@ -419,12 +419,12 @@ def batch_download_fav_video(batch_url, slice_count=0):
             for item in favorite_list:
                 all_video_url.append(f'{PREFIX_BATCH_URL}/v/ac{item["contentId"]}')
 
-        print(f'视频数量1：{len(all_video_url)}')
+        # print(f'视频数量1：{len(all_video_url)}')
         # print(f'url -->', all_video_url)
         if slice_count > 0:
             all_video_url = all_video_url[:slice_count]
         # all_video_url = list(set(all_video_url))  # 去重
-        print(f'视频数量2：{len(all_video_url)}')
+        # print(f'视频数量2：{len(all_video_url)}')
 
     # 统计数据
     reset_counter()
@@ -442,6 +442,6 @@ def reset_counter():
 
 if __name__ == '__main__':
     # single_download_video(URL, False)  # 12.328634262084961 S
-    single_download_video(URL, True)  # 8.814500570297241 S
+    # single_download_video(URL, True)  # 8.814500570297241 S
     # batch_download_upper_video(BATCH_URL, 3)
-    # batch_download_fav_video(BATCH_FAV_URL, 14)
+    batch_download_fav_video(BATCH_FAV_URL, 4)
