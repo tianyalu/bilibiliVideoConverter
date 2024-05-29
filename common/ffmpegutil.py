@@ -8,7 +8,7 @@ def get_video_cover(video_path, cover_img_path='thumb.png', n=100):
     try:
         cmd_str = f'ffmpeg -i "{video_path}" -vf "select=eq(n\,{n})" -vframes 1 "{cover_img_path}"'
         print('cmd_str-->', cmd_str)
-        ret = subprocess.call(cmd_str, shell=True)
+        ret = subprocess.call(cmd_str, shell=False)
         return ret, 'success'
     except Exception as e:
         return ret, e
@@ -20,7 +20,7 @@ def add_cover_to_video(video_path_src, cover_url, video_path_dist):
     try:
         cmd_str = f'ffmpeg -i "{video_path_src}" -i "{cover_url}" -map 0 -map 1 -c copy -c:v:1 png -disposition:v:1 attached_pic "{video_path_dist}"'
         print('cmd_str-->', cmd_str)
-        ret = subprocess.call(cmd_str, shell=True)
+        ret = subprocess.call(cmd_str, shell=False)
         return ret, ''
     except Exception as e:
         return ret, e

@@ -22,7 +22,6 @@ from lxml import etree  # lxml:解析HTML内容  导入了 lxml 库的 etree 模
 import json  # 解析JSON数据
 from tqdm import tqdm  # 在控制台显示进度条
 from concurrent.futures import ThreadPoolExecutor, as_completed  # 提供异步执行的能力
-import subprocess
 import os
 import pprint
 import time
@@ -37,24 +36,16 @@ from common import globaldata
 # 1.确定url地址
 
 # 单视频下载
-# URL = "https://www.acfun.cn/v/ac43577708"
-# URL = "https://m.acfun.cn/v/?ac=44523314&sid=d75e7106fb456c95"
-# URL = "https://m.acfun.cn/v/?ac=44523314"
-# URL = "https://www.acfun.cn/v/ac35582241"
-# URL = "https://www.acfun.cn/v/ac35437039"
-# URL = "https://www.acfun.cn/v/ac44546118"
-# URL = "https://www.acfun.cn/v/ac44581895"
-URL = "https://www.acfun.cn/v/ac44606386"
-# URL = 'https://www.acfun.cn/u/56776847?quickViewId=ac-space-video-list&reqID=2&ajaxpipe=1&type=video&order=newest&page=1&pageSize=20&t=1705985425289'
+URL = "https://www.acfun.cn/v/ac35578408"
 # 视频前缀
-PREFIX_URL = "https://ali-safety-video.acfun.cn/mediacloud/acfun/acfun_video"
+SEGMENT_ALI_PREFIX_URL = "https://ali-safety-video.acfun.cn/mediacloud/acfun/acfun_video"
+SEGMENT_TX_PREFIX_URL = "https://tx-safety-video.acfun.cn/mediacloud/acfun/acfun_video/hls"
 PREFIX_BATCH_FAV_URL = "https://www.acfun.cn/rest/pc-direct/favorite/resource/dougaList"
 
 # 批量下载（下载一个up主的所有视频）
 # 批量下载的URL
 BATCH_URL = "https://www.acfun.cn/u/56776847"
 BATCH_FAV_URL = "https://www.acfun.cn/member/favourite/folder/74465596"
-# BATCH_FAV_URL = "https://www.acfun.cn/member/favourite/folder/2253823"
 # 视频前缀
 PREFIX_BATCH_URL = "https://www.acfun.cn"
 
@@ -102,7 +93,7 @@ def get_video_info_and_title(url):
     if not jsonutil.is_valid_json(videoInfo):
         print('JSON 非法')
         videoInfo = get_video_info_again(html)
-    print(videoInfo)
+    # print(videoInfo)
 
     # logging.error(videoInfo)
     return videoInfo, title
@@ -125,7 +116,7 @@ def get_video_info_again(text):
 def parse_data(videoInfo):
     # 解析JSON数据
     ksPlayJson = json.loads(videoInfo)['currentVideoInfo']['ksPlayJson']
-    print(ksPlayJson)
+    # print(ksPlayJson)
     representation = json.loads(ksPlayJson)['adaptationSet'][0]['representation']
     backupUrl = representation[0]['backupUrl'][0]  # 视频的URL地址
 
@@ -146,20 +137,34 @@ def parse_data(videoInfo):
 def download_segment(args):
     # 下载单个视频片段
     index, segment_url, title = args
-    segment_url = segment_url if (segment_url.startswith('http')) else f'{PREFIX_URL}/{segment_url}'
+    seg_url = segment_url if (segment_url.startswith('http')) else f'{SEGMENT_ALI_PREFIX_URL}/{segment_url}'
     temp_filename = f"{VIDEO_DIR}/temp_{index:05d}.ts"
+    ret = do_download_segment(index, seg_url, temp_filename)
+    if ret:
+        return index, temp_filename
+    else:
+        print(f'SEGMENT_ALI_PREFIX_URL下载视频片段失败，尝试采用SEGMENT_TX_PREFIX_URL下载')
+        seg_url = segment_url if (segment_url.startswith('http')) else f'{SEGMENT_TX_PREFIX_URL}/{segment_url}'
+        ret = do_download_segment(index, seg_url, temp_filename)
+        if ret:
+            return index, temp_filename
+        else:
+            return index, None
+
+
+def do_download_segment(index, segment_url, temp_filename):
     try:
         # print(f'\nsegment url --> {segment_url}')
         response = requests.get(url=segment_url, headers=headers)
         if response.status_code == 200:
             with open(temp_filename, "wb") as f:
                 f.write(response.content)
-            return index, temp_filename
+            return True
         else:
-            return index, None
+            return False
     except Exception as e:
         print(e)
-        return index, None
+        return False
 
 
 # 合并所有视频片段
@@ -204,7 +209,7 @@ def download_video(segments, final_name):
     title = final_name.split('/')[-1]
     for item in tqdm(segments):
         # 拼接视频的URL地址
-        m3u8_download_url = f'{PREFIX_URL}/{item}'
+        m3u8_download_url = f'{SEGMENT_ALI_PREFIX_URL}/{item}'
         # print(m3u8_download_url)
         # 下载视频数据
         video_get = requests.get(url=m3u8_download_url, headers=headers)
@@ -264,7 +269,6 @@ def single_download_video(url, isConcurrently=True, multi_p_name=''):
         findall, cover_image_url = parse_data(videoInfo)
         final_name = get_file_name(title, multi_p_name)
         print(f'final_name --> {final_name}')
-        # return
         # 下载视频
         if isConcurrently:
             download_video_concurrently(findall, final_name)
@@ -335,7 +339,7 @@ def batch_download_upper_video(batch_url, slice_count=0):
             # 获取当前时间戳
             current_timestamp = time.time()
             next_url = batch_url + f"?quickViewId=ac-space-video-list&reqID={i}&ajaxpipe=1&type=video&order=newest&page={i}&pageSize=20&t={current_timestamp}"
-            print(next_url)
+            # print(next_url)
             # 发请求获取页面数据
             requests_get = requests.get(url=next_url, headers=headers)
             requests_get.encoding = 'utf-8'
@@ -438,6 +442,6 @@ def reset_counter():
 
 if __name__ == '__main__':
     # single_download_video(URL, False)  # 12.328634262084961 S
-    # single_download_video(URL, True)  # 8.814500570297241 S
+    single_download_video(URL, True)  # 8.814500570297241 S
     # batch_download_upper_video(BATCH_URL, 3)
-    batch_download_fav_video(BATCH_FAV_URL, 4)
+    # batch_download_fav_video(BATCH_FAV_URL, 14)
