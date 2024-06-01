@@ -32,25 +32,25 @@ from common import jsonutil
 from common import ffmpegutil
 from common import globaldata
 
-
 # 1.确定url地址
 
 # 单视频下载
-URL = "https://www.acfun.cn/v/ac35578408"
+URL = "https://www.acfun.cn/v/ac43918275"
+# 批量下载的URL
+BATCH_FAV_URL = "https://www.acfun.cn/member/favourite/folder/74510977"
+# 批量下载（下载一个up主的所有视频）
+BATCH_URL = "https://www.acfun.cn/u/56776847"
+
 # 视频前缀
 SEGMENT_ALI_PREFIX_URL = "https://ali-safety-video.acfun.cn/mediacloud/acfun/acfun_video"
 SEGMENT_TX_PREFIX_URL = "https://tx-safety-video.acfun.cn/mediacloud/acfun/acfun_video/hls"
 PREFIX_BATCH_FAV_URL = "https://www.acfun.cn/rest/pc-direct/favorite/resource/dougaList"
 
-# 批量下载（下载一个up主的所有视频）
-# 批量下载的URL
-BATCH_URL = "https://www.acfun.cn/u/56776847"
-BATCH_FAV_URL = "https://www.acfun.cn/member/favourite/folder/74501090"
 # 视频前缀
 PREFIX_BATCH_URL = "https://www.acfun.cn"
 
 # VIDEO_DIR = 'file/video'
-VIDEO_DIR = 'E:/Video/Afun/l_2024年5月30日001656'
+VIDEO_DIR = 'E:/Video/Afun/m_2024年06月01日001656'
 PAGE_SIZE_UPPER = 20
 PAGE_SIZE_FAV = 30
 # 统计
@@ -301,8 +301,11 @@ def get_multi_p_name_url(url):
     return p_urls, p_names
 
 
-# 批量下载up主的视频，如果第二个参数>0, 则只截取前slice_count个视频下载
-def batch_download_upper_video(batch_url, slice_count=0):
+# 批量下载up主的视频，支持下载部分视频
+# batch_url: up主文件夹URL
+# begin_index: 下载视频的起始索引，即在整个文件夹中的位置（从0开始）【闭区间】
+# end_index: 下载视频的结束索引，即在整个文件夹中的位置，默认-1，表示下载到结束【开区间】
+def batch_download_upper_video(batch_url, begin_index=0, end_index=-1):
     # 把所有的视频URL放到一个列表中
     all_video_url = []
     # 发请求获取页面数据
@@ -328,14 +331,16 @@ def batch_download_upper_video(batch_url, slice_count=0):
     # all_video_url = list(set(all_video_url))  # 去重
 
     # 截取前slice_count个视频下载
-    if 0 < slice_count <= len(all_video_url):
-        all_video_url = all_video_url[:slice_count]
+    if 0 < end_index <= len(all_video_url):
+        all_video_url = all_video_url[begin_index:end_index]
     else:
         # 找到下一页的url地址，根据num判断页数 一页20个视频
         # 页数
         page = int(num) // PAGE_SIZE_UPPER + 1
         # 下一页的URL地址
         for i in range(2, page + 1):  # 从第二页开始，因为第一页已经装了
+            if 0 < end_index <= len(all_video_url):
+                break
             # 获取当前时间戳
             current_timestamp = time.time()
             next_url = batch_url + f"?quickViewId=ac-space-video-list&reqID={i}&ajaxpipe=1&type=video&order=newest&page={i}&pageSize=20&t={current_timestamp}"
@@ -350,11 +355,11 @@ def batch_download_upper_video(batch_url, slice_count=0):
                 # href /v/ac42368063\\ 去 \\
                 href = href.replace('\\', '')
                 all_video_url.append(PREFIX_BATCH_URL + href)
-            if len(all_video_url) >= slice_count:
-                break
 
-        if slice_count > 0:
-            all_video_url = all_video_url[:slice_count]
+        if end_index > 0:
+            all_video_url = all_video_url[begin_index:end_index]
+        else:
+            all_video_url = all_video_url[begin_index:]
         # all_video_url = list(set(all_video_url))  # 去重
 
     # 统计数据
@@ -366,8 +371,11 @@ def batch_download_upper_video(batch_url, slice_count=0):
     print(f'批量下载视频完成：{globaldata.get_succeed_count()}/{globaldata.get_total_count()}')
 
 
-# 批量下载收藏夹视频，如果第二个参数>0, 则只截取前slice_count个视频下载
-def batch_download_fav_video(batch_url, slice_count=0):
+# 批量下载收藏夹视频：支持下载部分视频
+# batch_url: 收藏文件夹URL
+# begin_index: 下载视频的起始索引，即在整个文件夹中的位置（从0开始）【闭区间】
+# end_index: 下载视频的结束索引，即在整个文件夹中的位置，默认-1，表示下载到结束【开区间】
+def batch_download_fav_video(batch_url, begin_index=0, end_index=-1):
     # 把所有的视频URL放到一个列表中
     all_video_url = []
     # 发请求获取页面数据
@@ -381,7 +389,7 @@ def batch_download_fav_video(batch_url, slice_count=0):
     etree_html = etree.HTML(html)
     # 视频总数量
     pages = etree_html.xpath("//li[contains(@class, 'ac-pager-item')]/a/text()")
-    page = int(pages[-1]) if (len(pages) > 0) else 1   # 取最后一页的页号
+    page = int(pages[-1]) if (len(pages) > 0) else 1  # 取最后一页的页号
     print(f"视频总页数：{page}")
 
     # 找到视频的URL地址
@@ -394,14 +402,14 @@ def batch_download_fav_video(batch_url, slice_count=0):
 
     # 统计
     reset_counter()
-    # 截取前slice_count个视频下载
-    if 0 < slice_count <= len(all_video_url):
-        all_video_url = all_video_url[:slice_count]
+    # 截取end_index之前的视频下载
+    if 0 < end_index <= len(all_video_url):
+        all_video_url = all_video_url[begin_index:end_index]
     else:
         # 下一页的URL地址
         folder_id = BATCH_FAV_URL.split('/')[-1]
         for i in range(2, page + 1):  # 从第二页开始，因为第一页已经装了
-            if len(all_video_url) >= slice_count:
+            if 0 < end_index <= len(all_video_url):
                 break
             param = {
                 'folderId': folder_id,
@@ -421,8 +429,10 @@ def batch_download_fav_video(batch_url, slice_count=0):
 
         # print(f'视频数量1：{len(all_video_url)}')
         # print(f'url -->', all_video_url)
-        if slice_count > 0:
-            all_video_url = all_video_url[:slice_count]
+        if end_index > 0:
+            all_video_url = all_video_url[begin_index:end_index]
+        else:
+            all_video_url = all_video_url[begin_index:]
         # all_video_url = list(set(all_video_url))  # 去重
         # print(f'视频数量2：{len(all_video_url)}')
 
@@ -443,5 +453,5 @@ def reset_counter():
 if __name__ == '__main__':
     # single_download_video(URL, False)  # 12.328634262084961 S
     # single_download_video(URL, True)  # 8.814500570297241 S
-    # batch_download_upper_video(BATCH_URL, 3)
-    batch_download_fav_video(BATCH_FAV_URL, 4)
+    # batch_download_upper_video(BATCH_URL, 3, -1)
+    batch_download_fav_video(BATCH_FAV_URL, 30, 40)
