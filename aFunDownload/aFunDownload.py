@@ -37,7 +37,7 @@ from common import globaldata
 # 单视频下载
 URL = "https://www.acfun.cn/v/ac43918275"
 # 批量下载的URL
-BATCH_FAV_URL = "https://www.acfun.cn/member/favourite/folder/74510977"
+BATCH_FAV_URL = "https://www.acfun.cn/member/favourite/folder/74544977"
 # 批量下载（下载一个up主的所有视频）
 BATCH_URL = "https://www.acfun.cn/u/56776847"
 
@@ -50,7 +50,7 @@ PREFIX_BATCH_FAV_URL = "https://www.acfun.cn/rest/pc-direct/favorite/resource/do
 PREFIX_BATCH_URL = "https://www.acfun.cn"
 
 # VIDEO_DIR = 'file/video'
-VIDEO_DIR = 'E:/Video/Afun/m_2024年06月01日001656'
+VIDEO_DIR = 'E:/Video/Afun/p_2024年6月9日010738'
 PAGE_SIZE_UPPER = 20
 PAGE_SIZE_FAV = 30
 # 统计
@@ -454,4 +454,4 @@ if __name__ == '__main__':
     # single_download_video(URL, False)  # 12.328634262084961 S
     # single_download_video(URL, True)  # 8.814500570297241 S
     # batch_download_upper_video(BATCH_URL, 3, -1)
-    batch_download_fav_video(BATCH_FAV_URL, 30, 40)
+    batch_download_fav_video(BATCH_FAV_URL, 0, 16)

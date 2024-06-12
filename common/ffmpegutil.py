@@ -78,13 +78,13 @@ def add_remote_cover(video_path, cover_url):
 
 
 if __name__ == '__main__':
-    # video_name = 'F:/Video/Bilibili/2ciyuan/2024年5月13日004618/20240526.mp4'
-    # video_name = 'F:/Video/Bilibili/2ciyuan/2024年5月13日004618/202405/20240513.mp4'
-    # add_local_cover(video_name)
+    video_name = 'F:/Video/Bilibili/2ciyuan/2024年5月13日004618/mmd_20231224_183924.mp4'
+    # video_name = 'F:/Video/Bilibili/2ciyuan/2024年5月13日004618/菜鸡的作品5/20240528_2.mp4'
+    add_local_cover(video_name)
     # video_name = 'F:/Video/Bilibili/2ciyuan/2024年5月13日004618/202405/20240505_4.mp4'
     # video_dist_path = 'F:/Video/Bilibili/2ciyuan/2024年5月13日004618/202405/20240505__4.mp4'
     # thumb_path = 'F:/Video/Bilibili/2ciyuan/2024年5月13日004618/202405/20240505_4_pic.png'
     # add_cover_to_video(video_name, thumb_path, video_dist_path)
 
-    video_name = 'E:/Video/Afun/k_2024年5月20日005857/据说是…先天‘柳如烟’圣体！？——▎大师精选¹¹⁶___without_cover.mp4'
-    get_video_cover(video_name)
+    # video_name = 'E:/Video/Afun/k_2024年5月20日005857/据说是…先天‘柳如烟’圣体！？——▎大师精选¹¹⁶___without_cover.mp4'
+    # get_video_cover(video_name)

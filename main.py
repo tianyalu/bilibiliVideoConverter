@@ -8,8 +8,8 @@ import json
 import re
 import logging
 
-myDir = 'E:/Video/Bilibili/download_dm'  # 存放从手机复制而来的文件夹的地方
-finalDir = 'E:/Video/Bilibili/dm'  # 存放最终MP4文件的地方
+myDir = 'E:/Video/Bilibili/dq_dd_post'  # 存放从手机复制而来的文件夹的地方
+finalDir = 'E:/Video/Bilibili/dq_dd3'  # 存放最终MP4文件的地方
 # myDir = 'E:/Video/Bilibili/testsrc'  # 存放从手机复制而来的文件夹的地方
 # finalDir = 'E:/Video/Bilibili/testdist'  # 存放最终MP4文件的地方
 REMOVEOri = False  # 如果需要将源文件删除，将其更改为True
@@ -80,18 +80,21 @@ def convert_video():
             # 从JSON文件中读取视频文件名称
             json_file_path = os.path.join(each_part_path, 'entry.json')
             print('json_file_path -> ', json_file_path)
-            # 打开JSON文件
-            file = open(json_file_path, 'rb')
-            json_data = json.load(file)
-            print(json_data)
+            new_file_name = None
             try:
+                # 打开JSON文件
+                file = open(json_file_path, 'rb')
+                json_data = json.load(file)
+                print(json_data)
                 new_file_name = json_data['page_data']['download_subtitle']
+                print('new_file_name -> ', new_file_name)
             except Exception as e:
-                new_file_name = json_data['title']
-                logger.error(f'第{index + 1}个文件的子目录entry.json没有download_subtitle：{each_part_path}')
-            print('new_file_name -> ', new_file_name)
-            if not new_file_name:
-                new_file_name = json_data['title']
+                try:
+                    new_file_name = json_data['title']
+                    print('new_file_name2 -> ', new_file_name)
+                    logger.error(f'第{index + 1}个文件的子目录entry.json没有download_subtitle：{each_part_path}')
+                except Exception as e2:
+                    logger.error(f'第{index + 1}个文件的子目录entry.json没有title：{each_part_path}')
             if not new_file_name:
                 logger.error(f'第{index + 1}个文件的视频文件名字为空：{each_part_path}')
                 new_file_name = f'默认文件{index}'
