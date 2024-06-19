@@ -36,4 +36,6 @@ def test_break():
 if __name__ == '__main__':
     # test()
     # test_slice()
-    test_break()
+    # test_break()
+    a = 4
+    print(a**3)
