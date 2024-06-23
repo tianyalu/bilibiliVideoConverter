@@ -77,10 +77,27 @@ def add_remote_cover(video_path, cover_url):
         return code, err_msg
 
 
+# 为一个目录下的所有视频批量添加本地封面图
+def batch_add_local_cover(video_path):
+    files = os.listdir(video_path)
+    total = len(files)
+    succeed_count = 0
+    for file in files:
+        fileName = os.path.join(video_path, file)
+        code, msg = add_local_cover(fileName)
+        if code == 0:
+            succeed_count += 1
+        else:
+            print(f'{file} 添加封面失败：{msg}')
+    print(f'添加封面图完成：{succeed_count}/{total}')
+
+
 if __name__ == '__main__':
-    video_name = 'F:/Video/Bilibili/2ciyuan/2024年5月13日004618/mmd_20231224_183924.mp4'
+    # video_name = 'F:/Video/Bilibili/2ciyuan/2024年6月9日000310/test/透明.mp4'
     # video_name = 'F:/Video/Bilibili/2ciyuan/2024年5月13日004618/菜鸡的作品5/20240528_2.mp4'
-    add_local_cover(video_name)
+    video_name = 'F:/Video/Bilibili/2ciyuan/2024年6月9日000310/202406'
+    # add_local_cover(video_name)
+    batch_add_local_cover(video_name)
     # video_name = 'F:/Video/Bilibili/2ciyuan/2024年5月13日004618/202405/20240505_4.mp4'
     # video_dist_path = 'F:/Video/Bilibili/2ciyuan/2024年5月13日004618/202405/20240505__4.mp4'
     # thumb_path = 'F:/Video/Bilibili/2ciyuan/2024年5月13日004618/202405/20240505_4_pic.png'
