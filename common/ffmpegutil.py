@@ -92,12 +92,44 @@ def batch_add_local_cover(video_path):
     print(f'添加封面图完成：{succeed_count}/{total}')
 
 
+# 合并video.m4s 和 audio.m4s
+def single_convert_video(video_path, audio_path, dist_name='output.mp4'):
+    ret = -1
+    try:
+        cmd_str = f'ffmpeg -i {video_path} -i {audio_path} -codec copy {dist_name}'
+        # print('cmd_str-->', cmd_str)
+        # ret = subprocess.call(cmd_str, shell=True)
+        ret = subprocess.call(cmd_str, shell=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        return ret, ''
+    except Exception as e:
+        return ret, e
+
+
+# 从视频文件中分离出音频
+def split_audio_from_video(video_path, dist_name='output.mp3'):
+    ret = -1
+    try:
+        """
+        -i input.mp4: 指定输入文件
+        -vn: 禁用视频流。这个参数告诉 ffmpeg 不要处理视频部分，只处理音频。
+        -acodec copy: 指定音频编解码器为复制（copy），这样可以保持原始音频流的编解码格式和质量，而不进行重新编码。
+        output_audio.aac: 指定输出文件的名称和格式。这里输出为 AAC 格式的音频文件 output_audio.aac，你可以根据需要选择其他格式，如 MP3 (output_audio.mp3) 等。
+        """
+        cmd_str = f'ffmpeg -i {video_path} -vn -acodec copy {dist_name}'
+        # print('cmd_str-->', cmd_str)
+        ret = subprocess.call(cmd_str, shell=True)
+        # ret = subprocess.call(cmd_str, shell=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        return ret, ''
+    except Exception as e:
+        return ret, e
+
+
 if __name__ == '__main__':
     # video_name = 'F:/Video/Bilibili/2ciyuan/2024年6月9日000310/test/透明.mp4'
     # video_name = 'F:/Video/Bilibili/2ciyuan/2024年5月13日004618/菜鸡的作品5/20240528_2.mp4'
-    video_name = 'F:/Video/Bilibili/2ciyuan/2024年6月9日000310/202406'
+    # video_name = 'F:/Video/Bilibili/2ciyuan/2024年6月9日000310/202406'
     # add_local_cover(video_name)
-    batch_add_local_cover(video_name)
+    # batch_add_local_cover(video_name)
     # video_name = 'F:/Video/Bilibili/2ciyuan/2024年5月13日004618/202405/20240505_4.mp4'
     # video_dist_path = 'F:/Video/Bilibili/2ciyuan/2024年5月13日004618/202405/20240505__4.mp4'
     # thumb_path = 'F:/Video/Bilibili/2ciyuan/2024年5月13日004618/202405/20240505_4_pic.png'
@@ -105,3 +137,16 @@ if __name__ == '__main__':
 
     # video_name = 'E:/Video/Afun/k_2024年5月20日005857/据说是…先天‘柳如烟’圣体！？——▎大师精选¹¹⁶___without_cover.mp4'
     # get_video_cover(video_name)
+
+    # 合并音频和视频
+    # video_name = 'E:/Video/Bilibili/testsrc/226622104/c_1068319711/80/video.m4s'
+    # audio_name = 'E:/Video/Bilibili/testsrc/226622104/c_1068319711/80/audio.m4s'
+    # dist_name = 'E:/Video/Bilibili/testsrc/226622104/c_1068319711/80/output.mp4'
+    # single_convert_video(video_name, audio_name, dist_name)
+
+    # 从视频中分离音频
+    video_name = 'E:/Video/Bilibili/testsrc/226622104/c_1068319711/80/output.mp4'
+    dist_name = 'E:/Video/Bilibili/testsrc/226622104/c_1068319711/80/output.aac'
+    ret, err_msg = split_audio_from_video(video_name, dist_name)
+    if ret != 0:
+        print(err_msg)
