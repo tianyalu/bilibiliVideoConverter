@@ -125,10 +125,10 @@ def split_audio_from_video(video_path, dist_name='output.mp3'):
 
 
 if __name__ == '__main__':
-    # video_name = 'F:/Video/Bilibili/2ciyuan/2024年6月9日000310/test/透明.mp4'
+    video_name = 'F:/Video/Bilibili/2ciyuan/2024年6月23日181625/yanhe_excuse_me.mp4'
     # video_name = 'F:/Video/Bilibili/2ciyuan/2024年5月13日004618/菜鸡的作品5/20240528_2.mp4'
-    # video_name = 'F:/Video/Bilibili/2ciyuan/2024年6月9日000310/202406'
-    # add_local_cover(video_name)
+    # video_name = 'F:/Video/Bilibili/2ciyuan/2024年6月23日181625/202406'
+    add_local_cover(video_name)
     # batch_add_local_cover(video_name)
     # video_name = 'F:/Video/Bilibili/2ciyuan/2024年5月13日004618/202405/20240505_4.mp4'
     # video_dist_path = 'F:/Video/Bilibili/2ciyuan/2024年5月13日004618/202405/20240505__4.mp4'
@@ -145,8 +145,8 @@ if __name__ == '__main__':
     # single_convert_video(video_name, audio_name, dist_name)
 
     # 从视频中分离音频
-    video_name = 'E:/Video/Bilibili/testsrc/226622104/c_1068319711/80/output.mp4'
-    dist_name = 'E:/Video/Bilibili/testsrc/226622104/c_1068319711/80/output.aac'
-    ret, err_msg = split_audio_from_video(video_name, dist_name)
-    if ret != 0:
-        print(err_msg)
+    # video_name = 'E:/Video/Bilibili/testsrc/226622104/c_1068319711/80/output.mp4'
+    # dist_name = 'E:/Video/Bilibili/testsrc/226622104/c_1068319711/80/output.aac'
+    # ret, err_msg = split_audio_from_video(video_name, dist_name)
+    # if ret != 0:
+    #     print(err_msg)
