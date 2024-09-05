@@ -20,11 +20,14 @@ def add_cover_to_video(video_path_src, cover_url, video_path_dist):
     ret = -1
     try:
         cmd_str = f'ffmpeg -i "{video_path_src}" -i "{cover_url}" -map 0 -map 1 -c copy -c:v:1 png -disposition:v:1 attached_pic "{video_path_dist}"'
+        # cmd_str = f'ffmpeg -i "{video_path_src}" -i "{cover_url}" -map 0:v:0 -map 0:a:0 -map 0:v:2 -map 1:v:0 -c copy "{video_path_dist}"'
         # print('cmd_str-->', cmd_str)
         # ret = subprocess.call(cmd_str, shell=True)
         ret = subprocess.call(cmd_str, shell=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        # print(f'ret --> {ret}')
         return ret, ''
     except Exception as e:
+        # print(e)
         return ret, e
 
 
@@ -35,7 +38,7 @@ def add_local_cover(video_path):
     video_format = video_path.split('.')[1]
     temp_name = f'{ori_path}___without_cover.{video_format}'
     cover_img_name = f'{ori_path}_thumb.png'
-    ret, err_msg = get_video_cover(video_path, cover_img_name)
+    ret, err_msg = get_video_cover(video_path, cover_img_name, 200)
     if ret == 0:
         # 原文件先重命名为临时文件
         os.rename(video_path, temp_name)
@@ -124,11 +127,38 @@ def split_audio_from_video(video_path, dist_name='output.mp3'):
         return ret, e
 
 
+# 将ts文件转换为mp4格式
+def convert_ts_to_mp4(video_path, dist_name='output.mp4'):
+    ret = -1
+    try:
+        cmd_str = f'ffmpeg -i {video_path} -c copy {dist_name}'
+        # print('cmd_str-->', cmd_str)
+        ret = subprocess.call(cmd_str, shell=True)
+        # ret = subprocess.call(cmd_str, shell=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        return ret, ''
+    except Exception as e:
+        return ret, e
+
+
+# 将audio.m4s文件转换为mp3格式
+def convert_m4s_to_mp3(audio_path, dist_name='output.mp3'):
+    ret = -1
+    try:
+        cmd_str = f'ffmpeg -i "{audio_path}" "{dist_name}"'
+        # print('cmd_str-->', cmd_str)
+        ret = subprocess.call(cmd_str, shell=True)
+        # ret = subprocess.call(cmd_str, shell=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        return ret, ''
+    except Exception as e:
+        return ret, e
+
+
 if __name__ == '__main__':
-    video_name = 'F:/Video/Bilibili/2ciyuan/2024年6月23日181625/yanhe_excuse_me.mp4'
+    # video_name = 'F:/Video/Bilibili/2ciyuan/2024年8月5日231428/Snapping - Bronya/4K小恶魔.mp4'
     # video_name = 'F:/Video/Bilibili/2ciyuan/2024年5月13日004618/菜鸡的作品5/20240528_2.mp4'
     # video_name = 'F:/Video/Bilibili/2ciyuan/2024年6月23日181625/202406'
-    add_local_cover(video_name)
+    # add_local_cover(video_name)
+
     # batch_add_local_cover(video_name)
     # video_name = 'F:/Video/Bilibili/2ciyuan/2024年5月13日004618/202405/20240505_4.mp4'
     # video_dist_path = 'F:/Video/Bilibili/2ciyuan/2024年5月13日004618/202405/20240505__4.mp4'
@@ -150,3 +180,15 @@ if __name__ == '__main__':
     # ret, err_msg = split_audio_from_video(video_name, dist_name)
     # if ret != 0:
     #     print(err_msg)
+
+    # 将ts转换为mp4
+    # src_path = 'G:/video/YouTube/91/2024年8月11日183009/test'
+    # dist_name = 'G:/video/YouTube/91/2024年8月11日183009/test1.mp4'
+    # ret, err_msg = convert_ts_to_mp4(src_path, dist_name)
+    # if ret != 0:
+    #     print(err_msg)
+
+    # 将audio.m4s转为mp3
+    audio_name = 'C:/Users/tian/Desktop/113038455736150/c_25618025265/80/audio.m4s'
+    dist_name = 'C:/Users/tian/Desktop/壁上观 张晓涵 +1.13倍速 升调 混音.mp3'
+    ret, err_msg = convert_m4s_to_mp3(audio_name, dist_name)
