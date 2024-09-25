@@ -35,9 +35,9 @@ from common import globaldata
 # 1.确定url地址
 
 # 单视频下载
-URL = "https://www.acfun.cn/v/ac43918275"
+URL = "https://www.acfun.cn/v/75026278"
 # 批量下载的URL
-BATCH_FAV_URL = "https://www.acfun.cn/member/favourite/folder/74544977"
+BATCH_FAV_URL = "https://www.acfun.cn/member/favourite/folder/75113045"
 # 批量下载（下载一个up主的所有视频）
 BATCH_URL = "https://www.acfun.cn/u/56776847"
 
@@ -50,7 +50,7 @@ PREFIX_BATCH_FAV_URL = "https://www.acfun.cn/rest/pc-direct/favorite/resource/do
 PREFIX_BATCH_URL = "https://www.acfun.cn"
 
 # VIDEO_DIR = 'file/video'
-VIDEO_DIR = 'E:/Video/Afun/p_2024年6月9日010738'
+VIDEO_DIR = 'E:/Video/Afun/w_2024年9月22日154452'
 PAGE_SIZE_UPPER = 20
 PAGE_SIZE_FAV = 30
 # 统计
@@ -59,7 +59,8 @@ succeed_count = 0
 
 logging = logutil.init_logger('', 'error_log')
 
-cookie = '_did=web_1919071475B7ED70; _did=web_1919071475B7ED70; lsv_js_player_v2_main=e4d400; acPasstoken=ChVpbmZyYS5hY2Z1bi5wYXNzdG9rZW4ScF2AZBASWJBFsWB0xB39NEqKKelTamMDfm8scx1mth7iVfK8w74NlNLBA1QLQYQENIbtkrsTPGmyPWZkOneQKIOCePekEYm_3adZb5xTPiLgoXNKuVUxpYhgwiazGRXudj8VWgPlZY--4kEL1wsxV9waEpeyvoxdTP1KmaSqp4F28QDqNSIgbVND-loy2pzkwFGTBTFU_jYdl6IB5psALRWxpIi2M7EoBTAB; auth_key=19410036; ac_username=%E5%A4%A9%E6%B6%AF%E8%B7%AF2; acPostHint=5b56db99e87800bdb756f41e3b687e1123e6; ac_userimg=https%3A%2F%2Fimgs.aixifan.com%2Fstyle%2Fimage%2F201908%2FGEf9kCBCmahRBHsZJc5clycPZnjUSMRe.jpg; csrfToken=xawyH1WsrXzT92ngO2De-QGA; webp_supported=%7B%22lossy%22%3Atrue%2C%22lossless%22%3Atrue%2C%22alpha%22%3Atrue%2C%22animation%22%3Atrue%7D; Hm_lvt_2af69bc2b378fb58ae04ed2a04257ed1=1715875645,1715963538,1716043889,1716136141; safety_id=AAI3eYMjDISBr2-FAIkGDXAu; Hm_lpvt_2af69bc2b378fb58ae04ed2a04257ed1=1716136263; cur_req_id=5453027953911712_self_c229e41ea74e92504879af6cbf55b116; cur_group_id=5453027953911712_self_c229e41ea74e92504879af6cbf55b116_0'
+# cookie = '_did=web_1919071475B7ED70; _did=web_1919071475B7ED70; lsv_js_player_v2_main=e4d400; acPasstoken=ChVpbmZyYS5hY2Z1bi5wYXNzdG9rZW4ScF2AZBASWJBFsWB0xB39NEqKKelTamMDfm8scx1mth7iVfK8w74NlNLBA1QLQYQENIbtkrsTPGmyPWZkOneQKIOCePekEYm_3adZb5xTPiLgoXNKuVUxpYhgwiazGRXudj8VWgPlZY--4kEL1wsxV9waEpeyvoxdTP1KmaSqp4F28QDqNSIgbVND-loy2pzkwFGTBTFU_jYdl6IB5psALRWxpIi2M7EoBTAB; auth_key=19410036; ac_username=%E5%A4%A9%E6%B6%AF%E8%B7%AF2; acPostHint=5b56db99e87800bdb756f41e3b687e1123e6; ac_userimg=https%3A%2F%2Fimgs.aixifan.com%2Fstyle%2Fimage%2F201908%2FGEf9kCBCmahRBHsZJc5clycPZnjUSMRe.jpg; csrfToken=xawyH1WsrXzT92ngO2De-QGA; webp_supported=%7B%22lossy%22%3Atrue%2C%22lossless%22%3Atrue%2C%22alpha%22%3Atrue%2C%22animation%22%3Atrue%7D; Hm_lvt_2af69bc2b378fb58ae04ed2a04257ed1=1715875645,1715963538,1716043889,1716136141; safety_id=AAI3eYMjDISBr2-FAIkGDXAu; Hm_lpvt_2af69bc2b378fb58ae04ed2a04257ed1=1716136263; cur_req_id=5453027953911712_self_c229e41ea74e92504879af6cbf55b116; cur_group_id=5453027953911712_self_c229e41ea74e92504879af6cbf55b116_0'
+cookie = '_did=web_1919071475B7ED70; _did=web_1919071475B7ED70; lsv_js_player_v2_main=e4d400; csrfToken=d2likAR_m1KquZ0ytdWUZ2lC; cur_req_id=323341843CA07D2_self_2d45c537a4f93b4689463857c3114dd1; cur_group_id=323341843CA07D2_self_2d45c537a4f93b4689463857c3114dd1_0; webp_supported=%7B%22lossy%22%3Atrue%2C%22lossless%22%3Atrue%2C%22alpha%22%3Atrue%2C%22animation%22%3Atrue%7D; Hm_lvt_2af69bc2b378fb58ae04ed2a04257ed1=1725718757,1725734103,1725803937,1725897525; HMACCOUNT=8EE2A532ADCC7748; stochastic=OXNldXc3cjVr; acPasstoken=ChVpbmZyYS5hY2Z1bi5wYXNzdG9rZW4ScIHAwnnRf3VHhPHc4fEKVTsZkhCkK778DYOEqtc00vmFhsbXnhZkkYaXK3y4NqgyR6xus-0ui2NOHLOzMElDBwo9NU4syCyKvnCAdPFtXB6cxVUsGi3t7-eCdto_yx1Lh_D77RVM4ngklMX9WHjhu9MaEpwtM_0h738MQEs-Sd4FOp-bcSIgSBEGTblvP9zYk63DbgyDAllV1OlPbv1ANSvdQEZgs50oBTAB; auth_key=19410036; ac_username=%E5%A4%A9%E6%B6%AF%E8%B7%AF2; acPostHint=4751c3b8193588c7ae6a14fa3cd86986b6c8; ac_userimg=https%3A%2F%2Fimgs.aixifan.com%2Fstyle%2Fimage%2F201908%2FGEf9kCBCmahRBHsZJc5clycPZnjUSMRe.jpg; safety_id=AAI3eYMjDISBr2-FAIkGDXAu; Hm_lpvt_2af69bc2b378fb58ae04ed2a04257ed1=1725897699'
 # 请求头，模拟浏览器访问
 headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 "
@@ -405,6 +406,8 @@ def batch_download_fav_video(batch_url, begin_index=0, end_index=-1):
     # 截取end_index之前的视频下载
     if 0 < end_index <= len(all_video_url):
         all_video_url = all_video_url[begin_index:end_index]
+        # print(f'{begin_index}: {end_index}')
+        # print(f'all_video_url --> {all_video_url}')
     else:
         # 下一页的URL地址
         folder_id = BATCH_FAV_URL.split('/')[-1]
@@ -454,4 +457,4 @@ if __name__ == '__main__':
     # single_download_video(URL, False)  # 12.328634262084961 S
     # single_download_video(URL, True)  # 8.814500570297241 S
     # batch_download_upper_video(BATCH_URL, 3, -1)
-    batch_download_fav_video(BATCH_FAV_URL, 0, 16)
+    batch_download_fav_video(BATCH_FAV_URL, 0, 4)

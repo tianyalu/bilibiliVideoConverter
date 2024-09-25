@@ -101,8 +101,8 @@ def single_convert_video(video_path, audio_path, dist_name='output.mp4'):
     try:
         cmd_str = f'ffmpeg -i {video_path} -i {audio_path} -codec copy {dist_name}'
         # print('cmd_str-->', cmd_str)
-        # ret = subprocess.call(cmd_str, shell=True)
-        ret = subprocess.call(cmd_str, shell=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        ret = subprocess.call(cmd_str, shell=True)
+        # ret = subprocess.call(cmd_str, shell=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         return ret, ''
     except Exception as e:
         return ret, e
@@ -156,8 +156,8 @@ def convert_m4s_to_mp3(audio_path, dist_name='output.mp3'):
 if __name__ == '__main__':
     # video_name = 'F:/Video/Bilibili/2ciyuan/2024年8月5日231428/Snapping - Bronya/4K小恶魔.mp4'
     # video_name = 'F:/Video/Bilibili/2ciyuan/2024年5月13日004618/菜鸡的作品5/20240528_2.mp4'
-    # video_name = 'F:/Video/Bilibili/2ciyuan/2024年6月23日181625/202406'
-    # add_local_cover(video_name)
+    video_name = 'F:/Video/Bilibili/2ciyuan/2024年8月19日231115/20240921_2.mp4'
+    add_local_cover(video_name)
 
     # batch_add_local_cover(video_name)
     # video_name = 'F:/Video/Bilibili/2ciyuan/2024年5月13日004618/202405/20240505_4.mp4'
@@ -169,9 +169,9 @@ if __name__ == '__main__':
     # get_video_cover(video_name)
 
     # 合并音频和视频
-    # video_name = 'E:/Video/Bilibili/testsrc/226622104/c_1068319711/80/video.m4s'
-    # audio_name = 'E:/Video/Bilibili/testsrc/226622104/c_1068319711/80/audio.m4s'
-    # dist_name = 'E:/Video/Bilibili/testsrc/226622104/c_1068319711/80/output.mp4'
+    # video_name = 'E:/Video/Bilibili/testsrc/test/video.m4s'
+    # audio_name = 'E:/Video/Bilibili/testsrc/test/audio.m4s'
+    # dist_name = 'E:/Video/Bilibili/testsrc/test/output.mp4'
     # single_convert_video(video_name, audio_name, dist_name)
 
     # 从视频中分离音频
@@ -189,6 +189,6 @@ if __name__ == '__main__':
     #     print(err_msg)
 
     # 将audio.m4s转为mp3
-    audio_name = 'C:/Users/tian/Desktop/113038455736150/c_25618025265/80/audio.m4s'
-    dist_name = 'C:/Users/tian/Desktop/壁上观 张晓涵 +1.13倍速 升调 混音.mp3'
-    ret, err_msg = convert_m4s_to_mp3(audio_name, dist_name)
+    # audio_name = 'C:/Users/tian/Desktop/113038455736150/c_25618025265/80/audio.m4s'
+    # dist_name = 'C:/Users/tian/Desktop/壁上观 张晓涵 +1.13倍速 升调 混音.mp3'
+    # ret, err_msg = convert_m4s_to_mp3(audio_name, dist_name)

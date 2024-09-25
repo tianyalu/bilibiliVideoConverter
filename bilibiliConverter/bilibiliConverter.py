@@ -9,7 +9,8 @@ import re
 import logging
 
 myDir = 'E:/Video/Bilibili/download'  # 存放从手机复制而来的文件夹的地方
-finalDir = 'E:/Video/Bilibili/dr_dc'  # 存放最终MP4文件的地方
+# myDir = 'E:/Video/Nox_share/ImageShare/download'  # 存放从手机复制而来的文件夹的地方
+finalDir = 'E:/Video/Bilibili/dt_da'  # 存放最终MP4文件的地方
 # myDir = 'E:/Video/fanjv/s_5291'  # 存放从手机复制而来的文件夹的地方
 # finalDir = 'E:/Video/fanjv/testdist'  # 存放最终MP4文件的地方
 REMOVEOri = False  # 如果需要将源文件删除，将其更改为True
@@ -69,6 +70,7 @@ def convert_normal_video():
             # F:\bilibiliVideoDLSmall\test\389864960\c_467410150
             each_part_path = os.path.join(directory, videoNameDir, cDir)
             # print('each_part_path -> ', each_part_path)
+            folder_name = extract_number_from_path(each_part_path)
             if not cDir.startswith('c_'):  # 屏蔽多余的或不需要的目录
                 logger.error(f'第{index + 1}个文件的子目录非标准目录：{each_part_path}')
                 continue
@@ -88,11 +90,11 @@ def convert_normal_video():
                 try:
                     new_file_name = json_data['title']
                     # print('new_file_name2 -> ', new_file_name)
-                    logger.error(f'第{index + 1}个文件的子目录entry.json没有download_subtitle：{each_part_path}')
+                    logger.error(f'第{index + 1}个文件{folder_name}的子目录entry.json没有download_subtitle：{each_part_path}')
                 except Exception as e2:
-                    logger.error(f'第{index + 1}个文件的子目录entry.json没有title：{each_part_path}')
+                    logger.error(f'第{index + 1}个文件{folder_name}的子目录entry.json没有title：{each_part_path}')
             if not new_file_name:
-                logger.error(f'第{index + 1}个文件的视频文件名字为空：{each_part_path}')
+                logger.error(f'第{index + 1}个文件{folder_name}的视频文件名字为空：{each_part_path}')
                 new_file_name = f'默认文件{index}'
             file.close()  # 关闭文件
             os.chdir(each_part_path)  # reach 此视频主文件夹中的一个分p
@@ -102,6 +104,7 @@ def convert_normal_video():
             for digitFolder in list(filter(os.path.isdir, os.listdir())):
                 # F:\bilibiliVideoDLSmall\test\389864960\1\80
                 sep_path = os.path.join(directory, videoNameDir, cDir, digitFolder)
+                # folder_name = extract_number_from_path(sep_path)
                 # print('sep_path -> ', sep_path)
                 os.chdir(sep_path)  # reach 此视频主文件夹中的一个分p的数字文件夹
 
@@ -115,11 +118,11 @@ def convert_normal_video():
                 try:
                     # ret = subprocess.call('ffmpeg -i video.m4s -i audio.m4s -codec copy output.mp4', shell=True)
                     ret = subprocess.call('ffmpeg -i video.m4s -i audio.m4s -codec copy output.mp4', shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                    print(f'第{index + 1}个文件 {filtered_name} execute result -> ', errMsg[ret])
+                    print(f'第{index + 1}个文件{folder_name}：{filtered_name} execute result -> ', errMsg[ret])
                 except Exception as e:
-                    logger.error(f'第{index + 1}个文件的执行视频合并命令出错：{sep_path}')
+                    logger.error(f'第{index + 1}个文件{folder_name}：的执行视频合并命令出错：{sep_path}')
                     logger.error(f'报错内容为：{str(e)}')
-                    print(f'第{index + 1}个文件  {filtered_name} execute failed -> ', e)
+                    print(f'第{index + 1}个文件{folder_name}：{filtered_name} execute failed -> ', e)
 
                 # output.mp4的绝对路径
                 file_path_out_put_old_name = os.path.join(directory, videoNameDir, cDir, digitFolder, 'output.mp4')
@@ -260,6 +263,17 @@ def convert_anime_video():
             shutil.rmtree(video_name_dir_path)
 
 
+# 从路径中“F:\bilibiliVideoDLSmall\test\389864960\1\80” 找到目录：389864960
+def extract_number_from_path(path_name):
+    # 正则表达式匹配目标字符串
+    match = re.search(r'\\(\d+)\\', path_name)
+    if match:
+        # 提取匹配到的字符串
+        return f'【{match.group(1)}】'
+    else:
+        return ""
+
+
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     if CUSTOM_DIR:
@@ -269,4 +283,5 @@ if __name__ == '__main__':
         print(f'目标文件目录为：{finalDir}')
     convert_normal_video()
     # convert_anime_video()
+
 
