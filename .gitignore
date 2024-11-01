@@ -7,4 +7,5 @@
 *.log
 *.pyc
 *.png
-/otherDownload
+/otherDownload/91Download.py
+/otherDownload/ksDownload.py
