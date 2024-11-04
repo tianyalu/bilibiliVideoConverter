@@ -14,15 +14,18 @@ from common import utils
 URL = "https://dimtown.com/115628.html"
 # 目标文件目录
 TARGET_DIR = 'E:\\video\\dimtown\\2024年8月11日183009'
+# 批量下载页面地址
+BATCH_URLS = [
+    "https://dimtown.com/115628.html"
+]
 
 # 请求头，模拟浏览器访问
 headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 "
                   "Safari/537.36 ",
     # ":authority": '91lt.co'
-
     # "Cookie": cookie,
-    # "Referer": "https://91lt.co/",
+    "Referer": "https://dimtown.com/",   # 防盗链
     # "Sec-Ch-Ua": '"Not/A)Brand";v="8", "Chromium";v="126", "Google Chrome";v="126"',
     # "Sec-Ch-Ua-Platform": "Windows"
     # ":path": '/wp-admin/admin-ajax.php?action=search_box',
@@ -53,7 +56,7 @@ def get_target_info_and_title(page_url):
     title = title[0] if (len(title) > 0) else '未定义的title'
     # 去除标题中的特殊字符
     title = utils.file_name_filter(title)
-    pprint.pprint(f'title: {title}')
+    # pprint.pprint(f'title: {title}')
 
     # 3.找图片URL
     url_list = etree_html.xpath('//img[@decoding="async"]/@src')
@@ -62,8 +65,19 @@ def get_target_info_and_title(page_url):
     for name in name_list:
         filtered_name_list.append(utils.file_name_filter(name))
     res_list = list(zip(url_list, name_list))
-    pprint.pprint(res_list)
+    # pprint.pprint(res_list)
     return title, res_list
+
+
+# 批量下载图片
+def batch_download(page_urls):
+    print(f'批量下载开始，总共{len(page_urls)}个页面')
+    succeed = 0
+    for index, page_url in enumerate(page_urls):
+        print(f'正在下载第{index + 1}个页面')
+        download(page_url)
+        succeed += 1
+    print(f'批量下载完成：({succeed}/{len(page_urls)})')
 
 
 # 下载图片
@@ -81,14 +95,16 @@ def download(page_url):
 
 # 下载图片
 def download_images(image_list, image_path):
-    print(f'图片下载中...')
+    folder_name = image_path.split("\\")[-1]
+    print(f'图片【{folder_name}】下载中...')
     succeed = 0
     for image in image_list:
         file_name = os.path.join(image_path, f'{image[1]}.jpg')
         ret = do_download_image(image[0], file_name)
         if ret:
             succeed += 1
-    print(f'图片下载完毕({succeed}/{len(image_list)})')
+            print(f'【{image[1]}】下载完成')
+    print(f'图片【{folder_name}】下载完毕({succeed}/{len(image_list)})')
 
 
 # 真正下载图片
@@ -103,9 +119,11 @@ def do_download_image(url, file_name):
             file.write(response.content)
             return True
     except requests.RequestException as e:
-        print(f'Error downloading image {file_name.split("./")[-1]}: {e}')
+        print(f'Error downloading image {file_name.split("/")[-1]}: {e}')
         return False
 
 
 if __name__ == "__main__":
-    get_target_info_and_title()
+    # get_target_info_and_title()
+    # download(URL)
+    batch_download(BATCH_URLS)
