@@ -27,12 +27,12 @@ from common import globaldata
 from common import const
 from common import utils
 
-VIDEO_DIR = 'G:\\video\\YouTube\\91\\2024年8月11日183009'
+VIDEO_DIR = 'G:\\video\\YouTube\\91\\2024年8月17日213855'
 KEY_FILE = f'{VIDEO_DIR}/video.key'  # m3u8的秘钥文件
 key = None
 key_iv = None
 # 单视频下载
-URL = "https://i91.icu/2024/08/09/14336/"
+URL = "https://i91.icu/2023/12/22/3800/"
 # URL = "https://i91.icu/2024/02/08/8087/"
 # URL = "https://91lt.co/2024/02/06/7821/"
 # URL = "https://91lt.co/2024/02/02/7394/"
@@ -83,7 +83,7 @@ def get_video_info_and_title(url):
 
     # 再找视频的URL地址
     video_urls = etree_html.xpath('//div/@video-url')
-    # print(f'video_urls: {video_urls}')
+    # print(f'video_urls: {video_urls[0]}')
     if len(video_urls) == 0:
         print(f'视频地址获取失败：{title}')
 
@@ -111,7 +111,7 @@ def download(page_url):
             logging.error(f'图片地址获取失败：{title}')
             print(f'图片地址获取失败：{title}')
 
-        if len(video_path) > 0:
+        if len(video_urls) > 0:
             download_video(video_urls, video_path, title)
         else:
             logging.error(f'视频地址获取失败：{title}')
@@ -152,6 +152,8 @@ def do_download_image(url, file_name):
 # 下载视频
 def download_video(video_urls, video_path, title):
     print(f'视频【{title}】下载中...')
+    # print(f'urls -->{video_urls}')
+    # print(f'urls -->{len(video_urls)}')
     # 下载视频
     if len(video_urls) == 1:
         video_name = f'{title}.mp4'
@@ -165,8 +167,11 @@ def download_video(video_urls, video_path, title):
 
 
 def do_download(url, output_file):
-    if url.endswith('m3u8'):
-        download_m3u8(url, output_file)
+    # print(f'url: {url}<--')
+    clean_url = url.strip()
+    # print(f'clean_url: {clean_url}<--')
+    if clean_url.endswith('m3u8'):
+        download_m3u8(clean_url, output_file)
 
 
 # 下载m3u8视频
@@ -259,6 +264,7 @@ def merge_video_segments(segment_files, final_path):
 
 
 def download_video_concurrently(segments, final_name):
+    # print(f'final_name: {final_name}')
     start_time = time.time()
     title = final_name.split('/')[-1]
     segment_urls = [segment_url for segment_url in segments]
