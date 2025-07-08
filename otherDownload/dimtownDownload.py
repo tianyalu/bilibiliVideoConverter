@@ -11,12 +11,12 @@ from common import utils
 
 
 # 单页面下载地址
-URL = "https://dimtown.com/115628.html"
+URL = "https://dimtown.com/129983.html"
 # 目标文件目录
-TARGET_DIR = 'E:\\video\\dimtown\\2024年8月11日183009'
+TARGET_DIR = 'F:\\图片\\次元小镇\\pic\\2024年11月8日012429'
 # 批量下载页面地址
 BATCH_URLS = [
-    "https://dimtown.com/115628.html"
+    "https://dimtown.com/94725.html"
 ]
 
 # 请求头，模拟浏览器访问
@@ -56,15 +56,18 @@ def get_target_info_and_title(page_url):
     title = title[0] if (len(title) > 0) else '未定义的title'
     # 去除标题中的特殊字符
     title = utils.file_name_filter(title)
-    # pprint.pprint(f'title: {title}')
+    if '-次元小镇' in title:
+        title = title.replace('-次元小镇', '')
+    pprint.pprint(f'title: {title}')
 
     # 3.找图片URL
     url_list = etree_html.xpath('//img[@decoding="async"]/@src')
     name_list = etree_html.xpath('//img[@decoding="async"]/@alt')
     filtered_name_list = []
     for name in name_list:
-        filtered_name_list.append(utils.file_name_filter(name))
-    res_list = list(zip(url_list, name_list))
+        temp_name = utils.file_name_filter(name)
+        filtered_name_list.append(temp_name)
+    res_list = list(zip(url_list, filtered_name_list))
     # pprint.pprint(res_list)
     return title, res_list
 
@@ -125,5 +128,5 @@ def do_download_image(url, file_name):
 
 if __name__ == "__main__":
     # get_target_info_and_title()
-    # download(URL)
-    batch_download(BATCH_URLS)
+    download(URL)
+    # batch_download(BATCH_URLS)

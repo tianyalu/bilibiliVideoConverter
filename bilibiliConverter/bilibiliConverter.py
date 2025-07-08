@@ -7,10 +7,12 @@ import shutil
 import json
 import re
 import logging
+from common import fileutil
 
 myDir = 'E:/Video/Bilibili/download'  # 存放从手机复制而来的文件夹的地方
-# myDir = 'E:/Video/Nox_share/ImageShare/download'  # 存放从手机复制而来的文件夹的地方
-finalDir = 'E:/Video/Bilibili/dt_da'  # 存放最终MP4文件的地方
+# myDir = 'I:/Video/Bilibili/download_ea_ct'  # 存放从手机复制而来的文件夹的地方
+finalDir = 'E:/Video/Bilibili/ed_cq'  # 存放最终MP4文件的地方
+# finalDir = 'I:/Video/Bilibili/ea_ct'  # 存放最终MP4文件的地方
 # myDir = 'E:/Video/fanjv/s_5291'  # 存放从手机复制而来的文件夹的地方
 # finalDir = 'E:/Video/fanjv/testdist'  # 存放最终MP4文件的地方
 REMOVEOri = False  # 如果需要将源文件删除，将其更改为True
@@ -136,8 +138,11 @@ def convert_normal_video():
                 # print('file_path_out_put_new_name_with_new_path -> ', file_path_out_put_new_name_with_new_path)
 
                 if os.path.exists(file_path_out_put_new_name_with_new_path):
-                    os.remove(file_path_out_put_new_name_with_new_path)  # 存在则删除文件
-                    print('删除文件成功：', file_path_out_put_new_name_with_new_path)
+                    # os.remove(file_path_out_put_new_name_with_new_path)  # 存在则删除文件
+                    # print('删除文件成功：', file_path_out_put_new_name_with_new_path)
+                    old_file_name = file_path_out_put_new_name_with_new_path
+                    file_path_out_put_new_name_with_new_path = fileutil.get_random_file_name(old_file_name)
+                    print(f'存在同名文件：【{old_file_name}】,重命名为【{file_path_out_put_new_name_with_new_path}】')
                 # 重命名文件或目录
                 try:
                     os.rename(file_path_out_put_old_name, file_path_out_put_new_name_with_new_path)
@@ -283,5 +288,6 @@ if __name__ == '__main__':
         print(f'目标文件目录为：{finalDir}')
     convert_normal_video()
     # convert_anime_video()
+
 
 

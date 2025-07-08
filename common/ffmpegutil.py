@@ -156,7 +156,8 @@ def convert_m4s_to_mp3(audio_path, dist_name='output.mp3'):
 if __name__ == '__main__':
     # video_name = 'F:/Video/Bilibili/2ciyuan/2024年8月5日231428/Snapping - Bronya/4K小恶魔.mp4'
     # video_name = 'F:/Video/Bilibili/2ciyuan/2024年5月13日004618/菜鸡的作品5/20240528_2.mp4'
-    video_name = 'F:/Video/Bilibili/2ciyuan/2024年8月19日231115/20240921_2.mp4'
+    video_name = 'F:/Video/Bilibili/2ciyuan/2025年4月13日145454/202506/20250618.mp4'
+    # video_name = 'I:/Video/2CiYuan/2025年1月22日235357/202501/20250129_1.mp4'
     add_local_cover(video_name)
 
     # batch_add_local_cover(video_name)
@@ -165,8 +166,10 @@ if __name__ == '__main__':
     # thumb_path = 'F:/Video/Bilibili/2ciyuan/2024年5月13日004618/202405/20240505_4_pic.png'
     # add_cover_to_video(video_name, thumb_path, video_dist_path)
 
-    # video_name = 'E:/Video/Afun/k_2024年5月20日005857/据说是…先天‘柳如烟’圣体！？——▎大师精选¹¹⁶___without_cover.mp4'
+    # 获取封面图
+    # video_name = 'F:/Video/Bilibili/2ciyuan/2024年10月21日235241/2k.mp4'
     # get_video_cover(video_name)
+    # get_video_cover(video_name, 'thumb.png', 1200)
 
     # 合并音频和视频
     # video_name = 'E:/Video/Bilibili/testsrc/test/video.m4s'
@@ -175,8 +178,8 @@ if __name__ == '__main__':
     # single_convert_video(video_name, audio_name, dist_name)
 
     # 从视频中分离音频
-    # video_name = 'E:/Video/Bilibili/testsrc/226622104/c_1068319711/80/output.mp4'
-    # dist_name = 'E:/Video/Bilibili/testsrc/226622104/c_1068319711/80/output.aac'
+    # video_name = 'E:/Video/Bilibili/testsrc/test/output.mp4'
+    # dist_name = 'E:/Video/Bilibili/testsrc/test/output.aac'
     # ret, err_msg = split_audio_from_video(video_name, dist_name)
     # if ret != 0:
     #     print(err_msg)

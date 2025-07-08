@@ -35,9 +35,9 @@ from common import globaldata
 # 1.确定url地址
 
 # 单视频下载
-URL = "https://www.acfun.cn/v/75026278"
+URL = "https://www.acfun.cn/v/ac46408223_2"
 # 批量下载的URL
-BATCH_FAV_URL = "https://www.acfun.cn/member/favourite/folder/75113045"
+BATCH_FAV_URL = "https://www.acfun.cn/member/favourite/folder/75456081"
 # 批量下载（下载一个up主的所有视频）
 BATCH_URL = "https://www.acfun.cn/u/56776847"
 
@@ -50,7 +50,7 @@ PREFIX_BATCH_FAV_URL = "https://www.acfun.cn/rest/pc-direct/favorite/resource/do
 PREFIX_BATCH_URL = "https://www.acfun.cn"
 
 # VIDEO_DIR = 'file/video'
-VIDEO_DIR = 'E:/Video/Afun/w_2024年9月22日154452'
+VIDEO_DIR = 'E:/Video/Afun/z_2025年6月25日004233/z1'
 PAGE_SIZE_UPPER = 20
 PAGE_SIZE_FAV = 30
 # 统计
@@ -58,9 +58,7 @@ total_count = 0
 succeed_count = 0
 
 logging = logutil.init_logger('', 'error_log')
-
-# cookie = '_did=web_1919071475B7ED70; _did=web_1919071475B7ED70; lsv_js_player_v2_main=e4d400; acPasstoken=ChVpbmZyYS5hY2Z1bi5wYXNzdG9rZW4ScF2AZBASWJBFsWB0xB39NEqKKelTamMDfm8scx1mth7iVfK8w74NlNLBA1QLQYQENIbtkrsTPGmyPWZkOneQKIOCePekEYm_3adZb5xTPiLgoXNKuVUxpYhgwiazGRXudj8VWgPlZY--4kEL1wsxV9waEpeyvoxdTP1KmaSqp4F28QDqNSIgbVND-loy2pzkwFGTBTFU_jYdl6IB5psALRWxpIi2M7EoBTAB; auth_key=19410036; ac_username=%E5%A4%A9%E6%B6%AF%E8%B7%AF2; acPostHint=5b56db99e87800bdb756f41e3b687e1123e6; ac_userimg=https%3A%2F%2Fimgs.aixifan.com%2Fstyle%2Fimage%2F201908%2FGEf9kCBCmahRBHsZJc5clycPZnjUSMRe.jpg; csrfToken=xawyH1WsrXzT92ngO2De-QGA; webp_supported=%7B%22lossy%22%3Atrue%2C%22lossless%22%3Atrue%2C%22alpha%22%3Atrue%2C%22animation%22%3Atrue%7D; Hm_lvt_2af69bc2b378fb58ae04ed2a04257ed1=1715875645,1715963538,1716043889,1716136141; safety_id=AAI3eYMjDISBr2-FAIkGDXAu; Hm_lpvt_2af69bc2b378fb58ae04ed2a04257ed1=1716136263; cur_req_id=5453027953911712_self_c229e41ea74e92504879af6cbf55b116; cur_group_id=5453027953911712_self_c229e41ea74e92504879af6cbf55b116_0'
-cookie = '_did=web_1919071475B7ED70; _did=web_1919071475B7ED70; lsv_js_player_v2_main=e4d400; csrfToken=d2likAR_m1KquZ0ytdWUZ2lC; cur_req_id=323341843CA07D2_self_2d45c537a4f93b4689463857c3114dd1; cur_group_id=323341843CA07D2_self_2d45c537a4f93b4689463857c3114dd1_0; webp_supported=%7B%22lossy%22%3Atrue%2C%22lossless%22%3Atrue%2C%22alpha%22%3Atrue%2C%22animation%22%3Atrue%7D; Hm_lvt_2af69bc2b378fb58ae04ed2a04257ed1=1725718757,1725734103,1725803937,1725897525; HMACCOUNT=8EE2A532ADCC7748; stochastic=OXNldXc3cjVr; acPasstoken=ChVpbmZyYS5hY2Z1bi5wYXNzdG9rZW4ScIHAwnnRf3VHhPHc4fEKVTsZkhCkK778DYOEqtc00vmFhsbXnhZkkYaXK3y4NqgyR6xus-0ui2NOHLOzMElDBwo9NU4syCyKvnCAdPFtXB6cxVUsGi3t7-eCdto_yx1Lh_D77RVM4ngklMX9WHjhu9MaEpwtM_0h738MQEs-Sd4FOp-bcSIgSBEGTblvP9zYk63DbgyDAllV1OlPbv1ANSvdQEZgs50oBTAB; auth_key=19410036; ac_username=%E5%A4%A9%E6%B6%AF%E8%B7%AF2; acPostHint=4751c3b8193588c7ae6a14fa3cd86986b6c8; ac_userimg=https%3A%2F%2Fimgs.aixifan.com%2Fstyle%2Fimage%2F201908%2FGEf9kCBCmahRBHsZJc5clycPZnjUSMRe.jpg; safety_id=AAI3eYMjDISBr2-FAIkGDXAu; Hm_lpvt_2af69bc2b378fb58ae04ed2a04257ed1=1725897699'
+cookie = '_did=web_1919071475B7ED70; _did=web_1919071475B7ED70; lsv_js_player_v2_main=ca85g8; csrfToken=afgn69h3EB6yZSGp9EMxaOcJ; webp_supported=%7B%22lossy%22%3Atrue%2C%22lossless%22%3Atrue%2C%22alpha%22%3Atrue%2C%22animation%22%3Atrue%7D; Hm_lvt_2af69bc2b378fb58ae04ed2a04257ed1=1749389550,1749478236,1749566653,1749654088; HMACCOUNT=8EE2A532ADCC7748; stochastic=eG5kdjZjcXltYw%3D%3D; acPasstoken=ChVpbmZyYS5hY2Z1bi5wYXNzdG9rZW4ScKDdoGJpaS27d7EOjNGc-KbxkM1HBhBCUzZ6-ZLoOmodUQFgOwhelfkRHJ_fKrilMcokzYX3o5pKgfgM6SPdimIijC4bc4DfO9-FpjDCNFvchydZeMcWCJHZeF7s7LymadE-Pk0YJx9JiWKlCWBYsuYaEhQ3NpM9eUxHpvoOuMlrP7DTvCIg2c8N84hqJemqsw7D9-A-l8f23sS9CYVXg-MtIcKORigoBTAB; auth_key=19410036; ac_username=%E5%A4%A9%E6%B6%AF%E8%B7%AF2; acPostHint=f2ea1374c9e302a874bc2ed81c7af299e2f1; ac_userimg=https%3A%2F%2Fimgs.aixifan.com%2Fstyle%2Fimage%2F201908%2FGEf9kCBCmahRBHsZJc5clycPZnjUSMRe.jpg; safety_id=AAI3eYMjDISBr2-FAIkGDXAu; cur_req_id=6873075833BB0034_self_bce31fc8deb0fff8b66cc271687c3a29; cur_group_id=6873075833BB0034_self_bce31fc8deb0fff8b66cc271687c3a29_0; Hm_lpvt_2af69bc2b378fb58ae04ed2a04257ed1=1749654267'
 # 请求头，模拟浏览器访问
 headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 "
