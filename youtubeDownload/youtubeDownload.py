@@ -5,6 +5,11 @@ from datetime import datetime
 
 # 视频下载URL
 DOWNLOAD_URL = 'https://www.youtube.com/watch?v=ZD5cVDPn1_k'
+# 批量视频链接列表
+VIDEO_URLS = [
+  'https://www.youtube.com/watch?v=ZD5cVDPn1_k',
+  # 其它视频链接...
+]
 # 下载目录
 VIDEO_DIR = 'E:/Video/YouTube/w_2024年9月22日154452'
 
@@ -50,6 +55,15 @@ def singleDownloadVideo(url, downloadCover=True, format='bestvideo+bestaudio/bes
         print(f'下载失败: {e}')
 
 
+def batch_download_youtube(urls, downloadCover=True, format='bestvideo+bestaudio/best'):
+    for url in urls:
+        print(f'开始下载: {url}')
+        singleDownloadVideo(url, downloadCover, format)
+        print('-' * 40)
+
+
 if __name__ == '__main__':
-    singleDownloadVideo(DOWNLOAD_URL, downloadCover=True, format='bestvideo+bestaudio/best')
+    # with open('urls.txt', 'r', encoding='utf-8') as f:
+    #     VIDEO_URLS = [line.strip() for line in f if line.strip()]
+    batch_download_youtube(VIDEO_URLS)
 
