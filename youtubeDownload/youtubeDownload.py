@@ -11,7 +11,7 @@ VIDEO_URLS = [
   # 其它视频链接...
 ]
 # 下载目录
-VIDEO_DIR = 'E:/Video/YouTube/w_2024年9月22日154452'
+VIDEO_DIR = 'E:/Video/YouTube/2025年7月18日004433'
 
 
 def get_file_name(title):
