@@ -7,7 +7,7 @@ from datetime import datetime
 DOWNLOAD_URL = 'https://www.youtube.com/watch?v=ZD5cVDPn1_k'
 # 批量视频链接列表
 VIDEO_URLS = [
-  'https://www.youtube.com/watch?v=FItXltjAmeo',
+  'https://www.youtube.com/watch?v=x2cyLa_Qjfs',
   # 其它视频链接...
 ]
 # 下载目录
@@ -23,6 +23,39 @@ def get_file_name(title):
     return final_name
 
 
+def get_cookies_options():
+    """获取 cookies 配置选项"""
+    cookies_options = {}
+    
+    # 尝试多种 cookies 文件路径
+    cookies_paths = [
+        './cookies.txt',
+        './youtube_cookies.txt',
+        '../cookies.txt',
+        os.path.expanduser('~/cookies.txt')
+    ]
+    
+    for path in cookies_paths:
+        if os.path.exists(path):
+            cookies_options['cookiefile'] = path
+            print(f"✅ 找到 cookies 文件: {path}")
+            break
+    else:
+        print("⚠️ 未找到 cookies 文件，尝试使用浏览器 cookies")
+        # 尝试从浏览器获取 cookies
+        try:
+            cookies_options['cookiesfrombrowser'] = ('chrome',)
+            print("✅ 使用 Chrome 浏览器 cookies")
+        except:
+            try:
+                cookies_options['cookiesfrombrowser'] = ('firefox',)
+                print("✅ 使用 Firefox 浏览器 cookies")
+            except:
+                print("❌ 无法获取浏览器 cookies，可能需要手动配置")
+    
+    return cookies_options
+
+
 # 下载YouTube视频
 # url: 视频链接
 # download_cover: 是否下载封面并添加到视频
@@ -31,13 +64,29 @@ def singleDownloadVideo(url, downloadCover=True, format='bestvideo+bestaudio/bes
     try:
         fileutil.create_directory(VIDEO_DIR)  # 确保目录存在
         
+        # 获取 cookies 配置
+        cookies_options = get_cookies_options()
+        
         # 先获取视频信息
         temp_opts = {
             'quiet': True,
             'no_warnings': True,
+            **cookies_options
         }
-        with YoutubeDL(temp_opts) as ydl:
-            info = ydl.extract_info(url, download=False)
+        
+        try:
+            with YoutubeDL(temp_opts) as ydl:
+                info = ydl.extract_info(url, download=False)
+        except Exception as e:
+            if "Sign in to confirm your age" in str(e):
+                print("❌ 需要年龄验证，请确保已正确配置 cookies")
+                print("💡 解决方案:")
+                print("   1. 在浏览器中登录 YouTube 并访问该视频")
+                print("   2. 导出 cookies 到 cookies.txt 文件")
+                print("   3. 或使用 --cookies-from-browser 选项")
+                raise e
+            else:
+                raise e
         
         print(f"视频标题: {info.get('title', 'Unknown')}")
         print(f"视频格式: {info.get('ext', 'Unknown')}")
@@ -55,10 +104,10 @@ def singleDownloadVideo(url, downloadCover=True, format='bestvideo+bestaudio/bes
             'writeinfojson': False,
             'writesubtitles': False,
             'writeautomaticsub': False,
-            'cookiefile': './cookies.txt',
             'http_headers': {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
             },
+            **cookies_options  # 添加 cookies 配置
         }
         
         if video_ext == 'webm':
