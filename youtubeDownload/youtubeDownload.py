@@ -7,7 +7,7 @@ from datetime import datetime
 DOWNLOAD_URL = 'https://www.youtube.com/watch?v=ZD5cVDPn1_k'
 # 批量视频链接列表
 VIDEO_URLS = [
-  'https://www.youtube.com/watch?v=x2cyLa_Qjfs',
+  'https://www.youtube.com/watch?v=nViyMVR_XG8&list=RDnViyMVR_XG8&start_radio=1',  # 去除播放列表参数，只下载单个视频
   # 其它视频链接...
 ]
 # 下载目录
@@ -21,6 +21,22 @@ def get_file_name(title):
     title = utils.file_name_filter(title)
     final_name = f"{VIDEO_DIR}/{title}_{time_str}.mp4"
     return final_name
+
+
+def extract_video_id_from_url(url):
+    """从 YouTube URL 中提取视频ID，去除播放列表参数"""
+    import re
+    
+    # 匹配视频ID的正则表达式
+    video_id_pattern = r'(?:youtube\.com/watch\?v=|youtu\.be/)([a-zA-Z0-9_-]+)'
+    match = re.search(video_id_pattern, url)
+    
+    if match:
+        video_id = match.group(1)
+        # 返回纯净的视频URL
+        return f'https://www.youtube.com/watch?v={video_id}'
+    else:
+        return url  # 如果无法提取，返回原URL
 
 
 def get_cookies_options():
@@ -64,6 +80,11 @@ def singleDownloadVideo(url, downloadCover=True, format='bestvideo+bestaudio/bes
     try:
         fileutil.create_directory(VIDEO_DIR)  # 确保目录存在
         
+        # 提取视频ID，去除播放列表参数
+        clean_url = extract_video_id_from_url(url)
+        if clean_url != url:
+            print(f"🔄 检测到播放列表链接，已提取单个视频: {clean_url}")
+        
         # 获取 cookies 配置
         cookies_options = get_cookies_options()
         
@@ -76,7 +97,7 @@ def singleDownloadVideo(url, downloadCover=True, format='bestvideo+bestaudio/bes
         
         try:
             with YoutubeDL(temp_opts) as ydl:
-                info = ydl.extract_info(url, download=False)
+                info = ydl.extract_info(clean_url, download=False)
         except Exception as e:
             if "Sign in to confirm your age" in str(e):
                 print("❌ 需要年龄验证，请确保已正确配置 cookies")
@@ -107,6 +128,10 @@ def singleDownloadVideo(url, downloadCover=True, format='bestvideo+bestaudio/bes
             'http_headers': {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
             },
+            'sleep_interval': 2,  # 请求间隔2秒
+            'max_sleep_interval': 10,  # 最大间隔10秒
+            'retries': 3,  # 重试次数
+            'fragment_retries': 3,  # 分片重试次数
             **cookies_options  # 添加 cookies 配置
         }
         
@@ -141,15 +166,15 @@ def singleDownloadVideo(url, downloadCover=True, format='bestvideo+bestaudio/bes
         
         # 使用设置好的参数下载视频
         with YoutubeDL(ydl_opts) as ydl:
-            ydl.download([url])
-        print(f"下载完成: {url}")
+            ydl.download([clean_url])
+        print(f"下载完成: {clean_url}")
             
     except Exception as e:
         print(f'下载失败: {e}')
         # 如果是合并失败，尝试手动处理
         if "merge" in str(e).lower() or "ffmpeg" in str(e).lower():
             print("检测到合并失败，尝试手动处理...")
-            try_manual_merge(url, ydl_opts)
+            try_manual_merge(clean_url, ydl_opts)
 
 
 def try_manual_merge(url, ydl_opts):
@@ -176,6 +201,13 @@ def batch_download_youtube(urls, downloadCover=True, format='bestvideo+bestaudio
             print(f'下载成功 [{i}/{len(urls)}]')
         except Exception as e:
             print(f'下载失败 [{i}/{len(urls)}]: {e}')
+        
+        # 添加延迟避免速率限制
+        if i < len(urls):  # 不是最后一个视频
+            print(f'⏳ 等待 5 秒后继续下一个下载...')
+            import time
+            time.sleep(5)
+        
         print('-' * 40)
 
 
