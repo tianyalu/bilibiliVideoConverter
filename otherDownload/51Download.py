@@ -168,33 +168,34 @@ def check_existing_files(video_path, title, video_count):
     return False
 
 
+def get_unique_filename(base_path, filename):
+    """获取唯一的文件名，如果文件存在则添加随机数后缀"""
+    if not os.path.exists(os.path.join(base_path, filename)):
+        return filename
+        
+    # 分离文件名和扩展名
+    name, ext = os.path.splitext(filename)
+    
+    # 生成带随机数的新文件名
+    while True:
+        random_suffix = random.randint(1000, 9999)
+        new_filename = f"{name}_{random_suffix}{ext}"
+        if not os.path.exists(os.path.join(base_path, new_filename)):
+            print(f"📝 文件已存在，重命名为: {new_filename}")
+            return new_filename
+
+
 def download_images(image_urls, image_path, overwrite=False):
     """下载图片"""
     print(f'图片下载中...')
     succeed = 0
-    
-    def get_unique_image_filename(base_path, filename):
-        """获取唯一的图片文件名，如果文件存在则添加随机数后缀"""
-        if not os.path.exists(os.path.join(base_path, filename)):
-            return filename
-            
-        # 分离文件名和扩展名
-        name, ext = os.path.splitext(filename)
-        
-        # 生成带随机数的新文件名
-        while True:
-            random_suffix = random.randint(1000, 9999)
-            new_filename = f"{name}_{random_suffix}{ext}"
-            if not os.path.exists(os.path.join(base_path, new_filename)):
-                print(f"📝 图片已存在，重命名为: {new_filename}")
-                return new_filename
     
     for url in image_urls:
         original_filename = f'{url.split("/")[-1]}.jpg'
         
         # 检查文件是否已存在并处理重命名
         if not overwrite:
-            original_filename = get_unique_image_filename(image_path, original_filename)
+            original_filename = get_unique_filename(image_path, original_filename)
         
         file_name = os.path.join(image_path, original_filename)
         ret = do_download_image(url, file_name)
@@ -222,22 +223,6 @@ def do_download_image(url, file_name):
 def download_video(video_urls, video_path, title, overwrite=False):
     """下载视频"""
     print(f'视频【{title}】下载中...')
-    
-    def get_unique_filename(base_path, filename):
-        """获取唯一的文件名，如果文件存在则添加随机数后缀"""
-        if not os.path.exists(os.path.join(base_path, filename)):
-            return filename
-            
-        # 分离文件名和扩展名
-        name, ext = os.path.splitext(filename)
-        
-        # 生成带随机数的新文件名
-        while True:
-            random_suffix = random.randint(1000, 9999)
-            new_filename = f"{name}_{random_suffix}{ext}"
-            if not os.path.exists(os.path.join(base_path, new_filename)):
-                print(f"📝 文件已存在，重命名为: {new_filename}")
-                return new_filename
     
     # 下载视频
     if len(video_urls) == 1:
@@ -276,9 +261,18 @@ def download_m3u8(m3u8_url, output_file):
 
     print(f"🎬 开始下载M3U8视频: {m3u8_url}")
     
+    # 验证URL格式
+    if '.m3u8' not in m3u8_url:
+        raise ValueError(f"❌ 无效的M3U8 URL: {m3u8_url} (应该包含.m3u8)")
+    
     # 下载 m3u8 文件
     try:
+        print("📥 正在加载M3U8播放列表...")
         m3u8_obj = m3u8.load(m3u8_url)
+        
+        if not m3u8_obj.segments:
+            raise ValueError("❌ M3U8播放列表为空，没有找到视频片段")
+            
         segments = m3u8_obj.segments
         segment_urls = [segment.absolute_uri for segment in segments]
         
@@ -301,6 +295,7 @@ def download_m3u8(m3u8_url, output_file):
                 key_iv = None
                 
             # 下载密钥文件
+            print("🔐 正在下载密钥文件...")
             download_key(key_url, KEY_FILE)
             with open(KEY_FILE, 'rb') as f:
                 key = f.read()
@@ -311,10 +306,19 @@ def download_m3u8(m3u8_url, output_file):
             key_iv = None
 
         # 执行下载操作
+        print("🚀 开始下载视频片段...")
         download_video_concurrently(segment_urls, output_file)
         
+    except requests.RequestException as e:
+        print(f"❌ 网络请求失败: {e}")
+        raise
     except Exception as e:
-        print(f"❌ M3U8下载失败: {e}")
+        if "InvalidPlaylist" in str(type(e)):
+            print(f"❌ M3U8播放列表格式错误: {e}")
+        elif "HTTP" in str(e) or "404" in str(e) or "403" in str(e):
+            print(f"❌ 网络请求失败: {e}")
+        else:
+            print(f"❌ M3U8下载失败: {e}")
         logging.error(f'M3U8下载失败: {m3u8_url} - {e}')
         raise
 
@@ -516,7 +520,9 @@ def download_from_urls_list(urls=None, overwrite=None, delay=None):
 
 def test_m3u8_download():
     """测试M3U8下载功能"""
-    test_m3u8_url = "https://hls.liheiat.xyz/videos5/9134db8c5b32ceb8a5707b9cae6cebb7/9134db8c5b32ceb8a5707b9cae6cebb7.m3u8?auth_key=1757937959-68c801279b6fb-0-b63fcae38f253e252e395d23fb8f2274&v=3&time=0"
+    # 正确的M3U8播放列表URL（不是密钥文件）
+    # test_m3u8_url = "https://hls.liheiat.xyz/videos5/9134db8c5b32ceb8a5707b9cae6cebb7/9134db8c5b32ceb8a5707b9cae6cebb7.m3u8?auth_key=1757937959-68c801279b6fb-0-b63fcae38f253e252e395d23fb8f2274&v=3&time=0"
+    test_m3u8_url = "https://hls.usoryy.cn/videos5/9134db8c5b32ceb8a5707b9cae6cebb7/9134db8c5b32ceb8a5707b9cae6cebb7.m3u8?auth_key=1758802273-68d53161f2e8a-0-be87831c27398271656f94e44f07cbfd&v=3&time=0"
     test_output = os.path.join(VIDEO_DIR, "test_m3u8_video.mp4")
     
     print("🧪 测试M3U8下载功能")
@@ -524,65 +530,29 @@ def test_m3u8_download():
     print(f"📁 输出文件: {test_output}")
     print("=" * 50)
     
+    # 验证URL是否为M3U8文件
+    if '.m3u8' not in test_m3u8_url:
+        print("❌ 错误：提供的URL不是M3U8播放列表文件")
+        print("💡 提示：M3U8文件应该包含.m3u8")
+        return
+    
     try:
         download_m3u8(test_m3u8_url, test_output)
         print("✅ M3U8下载测试成功！")
     except Exception as e:
         print(f"❌ M3U8下载测试失败: {e}")
-
-
-def test_rename_functionality():
-    """测试文件重命名功能"""
-    print("🧪 测试文件重命名功能")
-    print("=" * 50)
-    
-    # 创建测试目录
-    test_dir = os.path.join(VIDEO_DIR, "rename_test")
-    os.makedirs(test_dir, exist_ok=True)
-    
-    # 创建测试文件
-    test_file = os.path.join(test_dir, "test_video.mp4")
-    with open(test_file, 'w') as f:
-        f.write("test content")
-    
-    print(f"📁 创建测试文件: {test_file}")
-    
-    # 测试重命名功能
-    def get_unique_filename(base_path, filename):
-        """获取唯一的文件名，如果文件存在则添加随机数后缀"""
-        if not os.path.exists(os.path.join(base_path, filename)):
-            return filename
-            
-        # 分离文件名和扩展名
-        name, ext = os.path.splitext(filename)
-        
-        # 生成带随机数的新文件名
-        while True:
-            random_suffix = random.randint(1000, 9999)
-            new_filename = f"{name}_{random_suffix}{ext}"
-            if not os.path.exists(os.path.join(base_path, new_filename)):
-                print(f"📝 文件已存在，重命名为: {new_filename}")
-                return new_filename
-    
-    # 测试重命名
-    new_filename = get_unique_filename(test_dir, "test_video.mp4")
-    print(f"✅ 重命名结果: {new_filename}")
-    
-    # 清理测试文件
-    if os.path.exists(test_file):
-        os.remove(test_file)
-    print("🧹 清理测试文件完成")
+        print("💡 可能的原因：")
+        print("   1. URL已过期（auth_key有时间限制）")
+        print("   2. 网络连接问题")
+        print("   3. 服务器拒绝访问")
 
 
 if __name__ == '__main__':
-    # 测试文件重命名功能
-    test_rename_functionality()
-    
     # 测试M3U8下载功能
     # test_m3u8_download()
     
     # 使用代码中定义的URL列表和配置进行下载
-    # download_from_urls_list()
+    download_from_urls_list()
     
     # 或者自定义URL列表和配置
     # custom_urls = [
