@@ -17,6 +17,7 @@ import sys
 # 添加项目根目录到Python路径
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from common import logutil
+from common import ffmpegutil
 
 # pip install pycryptodome
 from Crypto.Cipher import AES
@@ -38,7 +39,7 @@ DOWNLOAD_URLS = [
 
 # 下载配置
 OVERWRITE_FILES = True  # 是否覆盖已存在的文件
-DOWNLOAD_DELAY = 3      # 下载间隔时间（秒）
+DOWNLOAD_DELAY = 0.5      # 下载间隔时间（秒）
 
 logging = logutil.init_logger('', 'error_log')
 
@@ -66,12 +67,23 @@ def get_video_info_and_title(url):
     title = title[0] if (len(title) > 0) else '未定义的title'
     # 去除标题中的特殊字符
     title = re.sub(r"[\/\\\:\*\?\"\<\>\|\s]", "", title)
-    delimiter = '91分享'
+    delimiter = '51吃瓜网'
     if delimiter in title:
         title = title.split(delimiter)[0]
 
     # 再找视频的URL地址
-    video_urls = etree_html.xpath('//div/@video-url')
+    video_urls = []
+    url_datas = etree_html.xpath('//div/@data-config')
+    for data_str in url_datas:
+        data_obj = json.loads(data_str)
+        # print(f'data_obj: {data_obj}')
+        video_obj = data_obj['video']
+        # print(f'video_obj: {video_obj}')
+        video_url = video_obj['url']
+        # print(f'video_url: {video_url}')
+        video_urls.append(video_url)
+
+    # print(f'video_urls: {video_urls}')
     if len(video_urls) == 0:
         print(f'视频地址获取失败：{title}')
 
@@ -94,7 +106,8 @@ def get_video_info_and_title(url):
                     print(f'找到M3U8 URL: {match}')
 
     # 找图片urls
-    image_urls = etree_html.xpath('//figure[@class="wp-block-image"]//img/@data-src')
+    # image_urls = etree_html.xpath('//div//img/@data-xkrkllgl')
+    image_urls = []
     if len(image_urls) == 0:
         print(f'未获取到图片url')
 
@@ -104,10 +117,10 @@ def get_video_info_and_title(url):
 def download(page_url, overwrite=False):
     """下载视频和图片"""
     video_urls, image_urls, title = get_video_info_and_title(page_url)
-    print(f'video_urls: {video_urls}')
+    # print(f'video_urls: {video_urls}')
     print(f'image_urls: {image_urls}')
-    print(f'title: {title}')
-    return
+    # print(f'title: {title}')
+    # return
     if len(image_urls) > 0 or len(video_urls) > 0:
         video_path = os.path.join(VIDEO_DIR, title)
         
@@ -223,7 +236,9 @@ def do_download_image(url, file_name):
 def download_video(video_urls, video_path, title, overwrite=False):
     """下载视频"""
     print(f'视频【{title}】下载中...')
-    
+    global video_success_count, video_total_count
+    video_success_count = 0
+    video_total_count = len(video_urls)
     # 下载视频
     if len(video_urls) == 1:
         video_name = f'{title}.mp4'
@@ -245,13 +260,16 @@ def download_video(video_urls, video_path, title, overwrite=False):
             
             output_file = os.path.join(video_path, video_name)
             do_download(video_urls[index], output_file)
-
+    print(f'单页下载完成[{video_success_count}/{video_total_count}]')
 
 def do_download(url, output_file):
     """执行下载"""
     clean_url = url.strip()
-    if clean_url.endswith('m3u8'):
+    if '.m3u8' in clean_url:
         download_m3u8(clean_url, output_file)
+    else:
+        print("❌ 错误：提供的URL不是M3U8播放列表文件")
+        print("💡 提示：M3U8文件应该包含.m3u8")
 
 
 def download_m3u8(m3u8_url, output_file):
@@ -259,7 +277,7 @@ def download_m3u8(m3u8_url, output_file):
     # 确保输出目录存在
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
 
-    print(f"🎬 开始下载M3U8视频: {m3u8_url}")
+    # print(f"🎬 开始下载M3U8视频: {m3u8_url}")
     
     # 验证URL格式
     if '.m3u8' not in m3u8_url:
@@ -267,7 +285,7 @@ def download_m3u8(m3u8_url, output_file):
     
     # 下载 m3u8 文件
     try:
-        print("📥 正在加载M3U8播放列表...")
+        # print("📥 正在加载M3U8播放列表...")
         m3u8_obj = m3u8.load(m3u8_url)
         
         if not m3u8_obj.segments:
@@ -276,14 +294,14 @@ def download_m3u8(m3u8_url, output_file):
         segments = m3u8_obj.segments
         segment_urls = [segment.absolute_uri for segment in segments]
         
-        print(f"📊 找到 {len(segment_urls)} 个视频片段")
+        # print(f"📊 找到 {len(segment_urls)} 个视频片段")
         
         # 获取秘钥信息
         if m3u8_obj.keys:
             key_info = m3u8_obj.keys[0]
             global key, key_iv
             key_url = key_info.absolute_uri
-            print(f"🔑 发现加密密钥: {key_url}")
+            # print(f"🔑 发现加密密钥: {key_url}")
             
             # 处理IV值
             if key_info.iv:
@@ -295,18 +313,18 @@ def download_m3u8(m3u8_url, output_file):
                 key_iv = None
                 
             # 下载密钥文件
-            print("🔐 正在下载密钥文件...")
+            # print("🔐 正在下载密钥文件...")
             download_key(key_url, KEY_FILE)
             with open(KEY_FILE, 'rb') as f:
                 key = f.read()
-            print(f"✅ 密钥下载完成，长度: {len(key)} 字节")
+            # print(f"✅ 密钥下载完成，长度: {len(key)} 字节")
         else:
             print("ℹ️ 未发现加密，使用明文下载")
             key = None
             key_iv = None
 
         # 执行下载操作
-        print("🚀 开始下载视频片段...")
+        # print("🚀 开始下载视频片段...")
         download_video_concurrently(segment_urls, output_file)
         
     except requests.RequestException as e:
@@ -415,7 +433,7 @@ def merge_video_segments(segment_files, final_path):
                 with open(decrypted_file, 'rb') as f:
                     content = f.read()
                     final_file.write(content)
-                    print(f"✅ 合并片段 {i+1}/{len(segment_files)}: {len(content)} 字节")
+                    # print(f"✅ 合并片段 {i+1}/{len(segment_files)}: {len(content)} 字节")
                 
                 # 清理临时文件
                 if os.path.exists(segment_file):
@@ -431,13 +449,14 @@ def merge_video_segments(segment_files, final_path):
     if os.path.exists(KEY_FILE):
         os.remove(KEY_FILE)
         
-    print(f"🎉 视频合并完成: {final_path}")
+    # print(f"🎉 视频合并完成: {final_path}")
 
 
 def download_video_concurrently(segments, final_name):
     """并发下载视频片段"""
+    global video_success_count
     start_time = time.time()
-    title = final_name.split('/')[-1]
+    title = final_name.split('\\')[-1]
     segment_urls = [segment_url for segment_url in segments]
     # 准备下载任务
     tasks = [(index, segment_url, title) for index, segment_url in enumerate(segment_urls)]
@@ -454,38 +473,45 @@ def download_video_concurrently(segments, final_name):
         merge_video_segments(segment_files, final_name)
         end_time = time.time()
         print(f"视频合并完成({len(segment_files)}/{len(segments)})：{title}")
+
+        code, msg = ffmpegutil.add_local_cover(final_name)
+        if code == 0:
+            print(f'添加本地封面成功')
+        else:
+            print(f'{title} 添加封面失败：{msg}')
         print(f"用时：{end_time - start_time} S")
+        video_success_count += 1
     else:
         print("某些片段下载失败，视频可能不完整")
 
 
 def batch_download(urls, overwrite=False, delay=2):
     """批量下载视频"""
-    print(f"🎯 批量下载 {len(urls)} 个视频")
-    print(f"📁 下载目录: {VIDEO_DIR}")
-    print(f"🔄 覆盖模式: {'开启' if overwrite else '关闭'}")
-    print(f"⏱️ 下载间隔: {delay} 秒")
-    print("=" * 50)
+    print(f"🎯 批量下载 {len(urls)} 个页面")
+    # print(f"📁 下载目录: {VIDEO_DIR}")
+    # print(f"🔄 覆盖模式: {'开启' if overwrite else '关闭'}")
+    # print(f"⏱️ 下载间隔: {delay} 秒")
+    # print("=" * 50)
     
     success_count = 0
     for i, url in enumerate(urls, 1):
-        print(f"\n📥 开始下载 [{i}/{len(urls)}]: {url}")
+        print(f"\n📥 开始下载页面[{i}/{len(urls)}]: {url}")
         try:
             if download(url, overwrite):
                 success_count += 1
-                print(f"✅ 下载成功 [{i}/{len(urls)}]")
+                print(f"✅ 页面下载成功 [{i}/{len(urls)}]")
             else:
-                print(f"⚠️ 下载跳过 [{i}/{len(urls)}]")
+                print(f"⚠️页面下载跳过 [{i}/{len(urls)}]")
         except Exception as e:
-            print(f"❌ 下载失败 [{i}/{len(urls)}]: {e}")
-            logging.error(f'批量下载失败 [{i}/{len(urls)}]: {url} - {e}')
+            print(f"❌ 页面下载失败 [{i}/{len(urls)}]: {e}")
+            logging.error(f'批量下载页面失败 [{i}/{len(urls)}]: {url} - {e}')
         
         # 添加延迟避免请求过快
         if i < len(urls):
             print(f"⏳ 等待 {delay} 秒...")
             time.sleep(delay)
     
-    print(f"\n🎉 批量下载完成: {success_count}/{len(urls)} 个视频成功")
+    print(f"\n🎉 批量下载完成: {success_count}/{len(urls)} 个页面成功")
 
 
 def download_from_urls_list(urls=None, overwrite=None, delay=None):
@@ -522,7 +548,8 @@ def test_m3u8_download():
     """测试M3U8下载功能"""
     # 正确的M3U8播放列表URL（不是密钥文件）
     # test_m3u8_url = "https://hls.liheiat.xyz/videos5/9134db8c5b32ceb8a5707b9cae6cebb7/9134db8c5b32ceb8a5707b9cae6cebb7.m3u8?auth_key=1757937959-68c801279b6fb-0-b63fcae38f253e252e395d23fb8f2274&v=3&time=0"
-    test_m3u8_url = "https://hls.usoryy.cn/videos5/9134db8c5b32ceb8a5707b9cae6cebb7/9134db8c5b32ceb8a5707b9cae6cebb7.m3u8?auth_key=1758802273-68d53161f2e8a-0-be87831c27398271656f94e44f07cbfd&v=3&time=0"
+    # test_m3u8_url = "https://hls.usoryy.cn/videos5/9134db8c5b32ceb8a5707b9cae6cebb7/9134db8c5b32ceb8a5707b9cae6cebb7.m3u8?auth_key=1758802273-68d53161f2e8a-0-be87831c27398271656f94e44f07cbfd&v=3&time=0"
+    test_m3u8_url = "https://hls.ggwoxq.cn/videos5/9134db8c5b32ceb8a5707b9cae6cebb7/9134db8c5b32ceb8a5707b9cae6cebb7.m3u8?auth_key=1760183086-68ea432ea3a44-0-247165fabb1c482769b7a0da2d9bb8e0&v=3&time=0"
     test_output = os.path.join(VIDEO_DIR, "test_m3u8_video.mp4")
     
     print("🧪 测试M3U8下载功能")
