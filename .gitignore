@@ -7,3 +7,5 @@
 *.log
 *.pyc
 *.png
+package-lock.json
+node_modules/
